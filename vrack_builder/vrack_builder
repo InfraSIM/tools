@@ -1,0 +1,318 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+
+import getopt, sys, json, os, fnmatch, time, subprocess
+import paramiko
+from pyVim import connect
+from pyVmomi import vim
+from pyVmomi import vmodl
+import paramiko
+
+def usage():
+    print("Usage: %s -u <username> -p <password> -h <esxi_host>" % sys.argv[0]);
+
+def shellcmd(cmd):
+    """ Execute one shell command."""
+
+    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    output = p.stdout.read()
+    return output.strip('\n')
+
+def findOva(vmtype, image_path):
+    files = []
+    for path, dirnames, filenames in os.walk(image_path):
+        for filename in fnmatch.filter(filenames, ("*%s*" % (vmtype))):
+            files.append(os.path.join(path, filename))
+
+    return files
+
+def check_prompt_function(chan, output = False):
+    resp = ""
+    while resp.find("(vPDU)") < 0:
+        resp = resp + chan.recv(64)
+    if output is True:
+        res_list = resp.split("\r\n")
+        return ("\n").join(res_list[1:len(res_list)-1])
+    return None
+
+def wait_for_tasks(service_instance, tasks):
+    """Given the service instance si and tasks, it returns after all the
+   tasks are complete
+   """
+    property_collector = service_instance.content.propertyCollector
+    task_list = [str(task) for task in tasks]
+    # Create filter
+    obj_specs = [vmodl.query.PropertyCollector.ObjectSpec(obj=task)
+                 for task in tasks]
+    property_spec = vmodl.query.PropertyCollector.PropertySpec(type=vim.Task,
+                                                               pathSet=[],
+                                                               all=True)
+    filter_spec = vmodl.query.PropertyCollector.FilterSpec()
+    filter_spec.objectSet = obj_specs
+    filter_spec.propSet = [property_spec]
+    pcfilter = property_collector.CreateFilter(filter_spec, True)
+    try:
+        version, state = None, None
+        # Loop looking for updates till the state moves to a completed state.
+        while len(task_list):
+            update = property_collector.WaitForUpdates(version)
+            for filter_set in update.filterSet:
+                for obj_set in filter_set.objectSet:
+                    task = obj_set.obj
+                    for change in obj_set.changeSet:
+                        if change.name == 'info':
+                            state = change.val.state
+                        elif change.name == 'info.state':
+                            state = change.val
+                        else:
+                            continue
+
+                        if not str(task) in task_list:
+                            continue
+
+                        if state == vim.TaskInfo.State.success:
+                            # Remove task from taskList
+                            task_list.remove(str(task))
+                        elif state == vim.TaskInfo.State.error:
+                            raise task.info.error
+            # Move to next version
+            version = update.version
+    finally:
+        if pcfilter:
+            pcfilter.Destroy()
+
+
+def vpdu_set_pdu_info(vpdu_ip, name=None, database=None, snmpdata=None):
+    if name is None and \
+            database is None and \
+            snmpdata is None:
+        return None
+
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(vpdu_ip, 20022)
+
+    chan = ssh.invoke_shell()
+    check_prompt_function(chan)
+    if name is not None:
+        chan.send("config pdu set name {0}\n".format(name))
+        check_prompt_function(chan)
+
+    if database is not None:
+        chan.send("config pdu set database {0}\n".format(database))
+        check_prompt_function(chan)
+
+    if snmpdata is not None:
+        chan.send("config pdu set datadir {0}\n".format(snmpdata))
+        check_prompt_function(chan)
+
+    ssh.close()
+
+
+def vpdu_add_esxi_config_info(vpdu_ip, host, usr, pwd):
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(vpdu_ip, 20022)
+
+    chan = ssh.invoke_shell()
+    check_prompt_function(chan)
+    chan.send("config esxi add %s %s %s\n" % (host, usr, pwd))
+    check_prompt_function(chan)
+
+    ssh.close()
+
+
+def vpdu_map_add(vpdu_ip, vnode_dt, vnode_name, pdu, pdu_port):
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(vpdu_ip, 20022)
+
+    chan =ssh.invoke_shell()
+    check_prompt_function(chan)
+    chan.send("map add %s %s %s %s\n" % (vnode_dt, vnode_name, pdu, pdu_port))
+    ssh.close()
+
+def vpdu_pwd_add(vpdu_ip, pdu, pdu_port, password):
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(vpdu_ip, 20022)
+
+    chan =ssh.invoke_shell()
+    check_prompt_function(chan)
+    chan.send("password set %s %s %s\n" % (pdu, pdu_port, password))
+    ssh.close()
+
+def vpdu_restart(vpdu_ip):
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(vpdu_ip, 20022)
+
+    chan =ssh.invoke_shell()
+    check_prompt_function(chan)
+    chan.send("vpdu restart\n")
+    check_prompt_function(chan)
+
+    ssh.close()
+
+def esxi_get_datastores(host, usr, pwd):
+    """ Get all datastore information of 1 ESXi. """
+    try:
+        si = connect.Connect(host=host, user=usr, pwd=pwd)
+
+        datacenter_obj = si.content.rootFolder.childEntity[0]
+        datastore_list = datacenter_obj.datastoreFolder.childEntity
+        dt_list = []
+        for dt in datastore_list:
+            dt_list.append(dt.name)
+        connect.Disconnect(si)
+    except Exception, e:
+        return None
+
+    return dt_list
+
+def esxi_get_network(host, usr, pwd):
+    """ Get the Network information of 1 ESXi. """
+    network_list = []
+    try:
+        si = connect.Connect(host=host, user=usr, pwd=pwd)
+        views = si.content.viewManager.CreateContainerView(si.content.rootFolder, [vim.Network], True)
+        for view in views.view:
+            network_list.append(view.name)
+        connect.Disconnect(si)
+    except Exception, e:
+        return None
+
+    return network_list
+
+def esxi_destory_vm(host, usr, pwd, vm_name):
+    try:
+        si = connect.Connect(host=host, user=usr, pwd=pwd)
+        vm_view = si.content.viewManager.CreateContainerView(si.content.rootFolder, [vim.VirtualMachine], True)
+        uuid = ""
+        for vm in vm_view.view:
+            if vm.summary.config.name == vm_name:
+                uuid = vm.summary.config.instanceUuid
+                break
+        if uuid == "":
+            connect.Disconnect(si)
+            return "Can't find VM(%s)!" % vm_name
+
+        vm = si.content.searchIndex.FindByUuid(None, uuid, True, True)
+        if vm.runtime.powerState == "poweredOn":
+            task = vm.PowerOffVM_Task()
+            wait_for_tasks(si, [task])
+
+        task = vm.Destroy_Task()
+        wait_for_tasks(si, [task])
+        connect.Disconnect(si)
+    except Exception, e:
+        return "Destory VM(%s) failed!" % vm_name
+
+    return "Destory VM(%s) success!" % vm_name
+
+def esxi_vm_ip_address(host, usr, pwd, vm_name):
+    try:
+        si = connect.Connect(host=host, user=usr, pwd=pwd)
+        vm_view = si.content.viewManager.CreateContainerView(si.content.rootFolder, [vim.VirtualMachine], True)
+        ip_address=""
+        for vm in vm_view.view:
+            print vm.summary.config.name
+            if vm.summary.config.name == vm_name:
+                if len(vm.guest.net) > 0:
+                    for nic in vm.guest.net:
+                        if len(nic.ipAddress) == 0:
+                           continue
+                        elif len(nic.ipAddress[0]) > 15:
+                           pass
+                        else:
+                           return nic.ipAddress[0]
+        connect.Disconnect(si)
+    except Exception, e:
+        return "Get VM(%s) details failed!" % vm_name
+
+
+def esxi_vm_deploy(host, usr, pwd, dtst, network, vm_type):
+    """Deploy the VM according to its type"""
+    ova_files = findOva(vm_type, "./")
+    if len(ova_files) == 0:
+        print "Please download DELL_R630 OVA file first"
+        sys.exit(-1)
+
+    name = ova_files[0].split('/')[-1].split('.')[0] + '_' + str(time.time())
+
+    ovftool = shellcmd("which ovftool")
+
+    cmd = 'echo "yes" | %s --diskMode=thin --datastore="%s" --network="%s" --name=%s --powerOn %s vi://%s:%s@%s' % \
+              (ovftool, dtst[0], network[0], name, ova_files[0], usr, pwd, host)
+
+    shellcmd(cmd)
+    return name
+
+def run_esxi_deploy(esxi_host):
+    deploy_info={}
+
+    esxi_datastore = esxi_get_datastores(esxi_host["host"], esxi_host["user"], esxi_host["password"])
+    esxi_network = esxi_get_network(esxi_host["host"], esxi_host["user"], esxi_host["password"])
+
+    if esxi_datastore is None or esxi_network is None:
+        print "Can't get ESXi DataStore/Network information.\nPlease check your ESXi server connection"
+        sys.exit(-1)
+
+    deploy_info["esxi_dtst"] = esxi_datastore[0]
+    deploy_info["esxi_network"] = esxi_network[0]
+    deploy_info["esxi_vms_name"] = []
+
+    print "Deploy Dell_R630 1st"
+    vm_name=esxi_vm_deploy(esxi_host["host"], esxi_host["user"], esxi_host["password"], esxi_datastore, esxi_network, "dell_r630")
+    deploy_info["esxi_vms_name"].append(vm_name)
+
+    print "Deploy Dell_R630 2nd"
+    vm_name=esxi_vm_deploy(esxi_host["host"], esxi_host["user"], esxi_host["password"], esxi_datastore, esxi_network, "dell_r630")
+    deploy_info["esxi_vms_name"].append(vm_name)
+    
+    print "Deploy vPDU"
+    vm_name=esxi_vm_deploy(esxi_host["host"], esxi_host["user"], esxi_host["password"], esxi_datastore, esxi_network, "hawk")
+    deploy_info["esxi_pdu_name"]=vm_name
+
+    print "Wait for VM starting up"
+    time.sleep(60)
+    deploy_info["esxi_pdu_ip"] = esxi_vm_ip_address(esxi_host["host"], esxi_host["user"], esxi_host["password"], deploy_info["esxi_pdu_name"])
+
+    print "Configure vPDU"
+    pdu_port = 1
+    vpdu_add_esxi_config_info(deploy_info["esxi_pdu_ip"], esxi_host["host"], esxi_host["user"], esxi_host["password"])
+    for vm in deploy_info["esxi_vms_name"]:
+        vpdu_set_pdu_info(deploy_info["esxi_pdu_ip"], deploy_info["esxi_pdu_name"], "ipia.db", "hawk")
+        vpdu_pwd_add(deploy_info["esxi_pdu_ip"], 1, pdu_port, "123456")
+        vpdu_map_add(deploy_info["esxi_pdu_ip"], deploy_info["esxi_dtst"], vm, 1, pdu_port)
+        pdu_port = pdu_port + 1        
+
+    print "PDU configured finished, restarting..." 
+    vpdu_restart(deploy_info["esxi_pdu_ip"])
+
+    time.sleep(20)
+    print "2 Dell R630, 1 vPDU deployed finished on ESXi"
+
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        usage()
+        sys.exit(1)
+
+    api_host_keys = {"user":"", "password":"", "host":""}
+    opts, args = getopt.getopt(sys.argv[1:], "u:p:h:", ["help"])
+    for opt, arg in opts:
+        if opt in ("-u"):
+            api_host_keys["user"] = arg
+        elif opt in ("-p"):
+            api_host_keys["password"] = arg
+        elif opt in ("-h"):
+            api_host_keys["host"] = arg
+        elif opt in ("--help"):
+            usage()
+            sys.exit(1)
+        else:
+            usage()
+            sys.exit(1)
+
+    run_esxi_deploy(api_host_keys)
