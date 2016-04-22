@@ -10,3 +10,4 @@ smbiostool             | Script to capture smbios data.
 virtualbox_builder     | Script to quickly build an compute node image on virtual box platform.
 vmworkstation_builder  | Script to quickly build an compute node image on vmworkstation platform.
 vmx                    | Script to build an compute node image with vmx type. 
+data_generater         | Script to generate the fru and sensor data for the new node simulation
