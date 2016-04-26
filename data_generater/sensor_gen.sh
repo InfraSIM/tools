@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Convert initial sensor dump so that it is one byte on each line
-hexdump -v -e '8/1 "0x%02x " " \\\n"' rj_sensors | sed "s/\\\ //g" | sed "s/\\\//g" | sed "s/0x //g" > sensors_tmp
+hexdump -v -e '8/1 "0x%02x " " \\\n"' sensors | sed "s/\\\ //g" | sed "s/\\\//g" | sed "s/0x //g" > sensors_tmp
 cat sensors_tmp  | tr ' ' '\012' | sed '/^$/d' > sensors_tmp2
 
 # Initialize variables before for loop
