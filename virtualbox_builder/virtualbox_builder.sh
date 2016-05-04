@@ -76,10 +76,22 @@ $PARTED --align=none -s $IMAGE set 1 boot on > /dev/null 2>&1
 # Write mbr.bin to first sector
 dd if=$MBR of=$IMAGE bs=512 count=1 conv=notrunc > /dev/null 2>&1 
 
-# Find first available loop device
-loop_dev=`losetup -f`
+#
+# find first available loop device
+#
+loop_dev=""
+loop_device_name=""
+while true
+do
+    loop_dev=`losetup -f`
+    [ -z "$loop_dev" ] && exit 1
 
-echo "First available loop device: $loop_dev"
+    loop_device_name=${loop_dev##*/}
+    lockfile-check -p /var/lock/${loop_device_name} || break
+done
+
+# Add a lock for each loop device
+lockfile-create -p /var/lock/$loop_device_name
 
 losetup -o 512 $loop_dev $IMAGE  >/dev/null 2>&1
 
