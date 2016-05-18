@@ -2,6 +2,11 @@ import os
 import sys
 
 special = False
+fru_file_path = sys.argv[1]
+fru_file_dir, fru_file_name = os.path.split(fru_file_path)
+if not fru_file_dir:
+    fru_file_dir="."
+fru_result = "result_{}".format(fru_file_name)
 last_line = ""
 new_file = ""
 new_data = ""
@@ -11,7 +16,7 @@ def file_handle():
     global special
     global new_file
     global last_line
-    os.system("hexdump fru.bin > tmp")
+    os.system("hexdump {}{}{} > tmp".format(fru_file_dir, os.sep, fru_file_name))
     with open("./tmp") as file:
         for line in file.readlines():
             if special:
@@ -31,8 +36,12 @@ def file_handle():
             if "*" in line:
                 special = True
             else:
-                new_file += line.split(' ', 1)[1]
-                last_line = line
+                try:
+                    new_file += line.split(' ', 1)[1]
+                except IndexError:
+                    return  # normally at the end of this file
+                else:
+                    last_line = line
 
 def data_handle():
     global new_data
@@ -55,10 +64,13 @@ def data_handle():
 
 
 def store_result():
-    with open("./fru.result", "w") as file:
+    with open("{}{}{}".format(fru_file_dir, os.sep, fru_result), "w") as file:
         file.write(new_data)
 
 
-file_handle()
-data_handle()
-store_result()
+
+if __name__ == "__main__":
+    file_handle()
+    data_handle()
+
+    store_result()
