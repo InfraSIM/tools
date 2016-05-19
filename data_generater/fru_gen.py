@@ -9,6 +9,7 @@ import sys
 import subprocess
 import argparse
 import time
+import re
 
 
 def param_parse():
@@ -88,6 +89,7 @@ def file_generate(user_data):
                                              stdout=subprocess.PIPE,
                                              stderr=subprocess.PIPE)
         if returncode != 0:
+            print cmd_result
             print "can't read the fru {} data".format(fru_id)
             sys.exit(1)
 
@@ -128,12 +130,19 @@ def file_handle(fru_folder, fru_file):
                     last_line = line
 
 
-def data_handle(new_file):
+def data_handle(new_file, fru_file):
+    m = re.match("fru(\d+)\.bin", fru_file)
+    if m is None:
+        print "can't get the fru ID"
+        return ""
+    fru_id = "{0:#x}".format(int(m.groups()[0]))
+    line_num = 0
     new_data = ""
     print "start to handle data"
     for line in new_file.split(os.linesep):
         if not line:
             continue
+        line_num += 2  # one line is splited into two
         content = line.split()
         if len(content) != 8:
             print "error"
@@ -147,6 +156,9 @@ def data_handle(new_file):
             data = content[i]
             new_data += "0x{} 0x{} ".format(data[2:4], data[0:2])
         new_data += "\\"+os.linesep
+    line_num = "{0:#x}".format(line_num*8)
+    new_data = "# FRU {} {}mc_add_fru_data 0x20 {} {} data {}{}".format(
+        fru_id, os.linesep, fru_id, line_num, os.linesep, new_data)
     return new_data
 
 
@@ -162,8 +174,10 @@ def main():
     fru_folder = file_generate(args)
     for root, fru_dir, fru_flies in os.walk(fru_folder):
         for fru_file in fru_flies:
+            if not fru_file.startswith("fru"):  # avoid handle the result file
+                continue
             new_file = file_handle(fru_folder, fru_file)
-            new_data = data_handle(new_file)
+            new_data = data_handle(new_file, fru_file)
             store_result(new_data, fru_folder, fru_file)
     os.remove("./tmp")
 
