@@ -55,6 +55,7 @@ class Base(object):
         self._host = None
         self._user = None
         self._password = None
+        self._intf = None
         self._ipmitool = "ipmitool"
 
     def __call__(self):
@@ -65,8 +66,9 @@ class Base(object):
         self._user = user
         self._password = password
 
-    def set_ipmitool(self, ipmitool_path):
+    def set_ipmitool(self, ipmitool_path, intf):
         self._ipmitool = ipmitool_path
+        self._intf = intf
 
     def get_string(self):
         return self._string.output_string()
@@ -133,9 +135,10 @@ class MC(Base):
         if self._host is None or self._user is None or self._password is None:
             raise ValueError("Missing host information")
 
-        ipmitool_mc_command = "{ipmitool} -I lanplus -U {user} -P {password} " \
+        ipmitool_mc_command = "{ipmitool} -I {intf} -U {user} -P {password} " \
                               "-H {host} mc info > {target_file}".\
-            format(ipmitool=self._ipmitool, user=self._user, password=self._password,
+            format(ipmitool=self._ipmitool, intf=self._intf, user=self._user,
+                   password=self._password,
                    host=self._host, target_file=target_file)
 
         command_exit_status, command_output = self.run_command(ipmitool_mc_command,
@@ -237,9 +240,10 @@ class FRU(Base):
         if self._host is None or self._user is None or self._password is None:
             raise ValueError("Missing host information")
 
-        ipmitool_fru_command = "{ipmitool} -I lanplus -U {user} -P {password} " \
+        ipmitool_fru_command = "{ipmitool} -I {intf} -U {user} -P {password} " \
                                "-H {host} fru read {id} {target_file}".\
-            format(ipmitool=self._ipmitool, user=self._user, password=self._password,
+            format(ipmitool=self._ipmitool, intf=self._intf, user=self._user,
+                   password=self._password,
                    host=self._host, id=fru_id, target_file=target_file)
 
         command_exit_status, command_output = self.run_command(ipmitool_fru_command,
@@ -252,8 +256,8 @@ class FRU(Base):
         if self._host is None or self._user is None or self._password is None:
             raise ValueError("Missing host info.")
 
-        ipmitool_fru_command = "{ipmitool} -I lanplus -U {user} -P {password} -H {host} fru".\
-            format(ipmitool=self._ipmitool, user=self._user,
+        ipmitool_fru_command = "{ipmitool} -I {intf} -U {user} -P {password} -H {host} fru".\
+            format(ipmitool=self._ipmitool, intf=self._intf, user=self._user,
                    password=self._password, host=self._host)
         command_exit_status, command_output = self.run_command(ipmitool_fru_command,
                                                                stdout=subprocess.PIPE,
@@ -352,9 +356,9 @@ class SDR(Base):
         if self._host is None or self._user is None or self._password is None:
             raise ValueError("Missing host info")
 
-        ipmitool_sdr_command = "{ipmitool} -I lanplus -U {user} -P " \
+        ipmitool_sdr_command = "{ipmitool} -I {intf} -U {user} -P " \
                                "{password} -H {host} sdr dump {tf}".\
-            format(ipmitool=self._ipmitool, user=self._user,
+            format(ipmitool=self._ipmitool, intf=self._intf, user=self._user,
                    password=self._password, host=self._host, tf=target_file)
 
         command_exit_status, command_output = self.run_command(ipmitool_sdr_command,
@@ -369,9 +373,9 @@ class SDR(Base):
         if self._host is None or self._user is None or self._password is None:
             raise ValueError("Missing host info")
 
-        ipmitool_command = "ipmitool -I lanplus -U {user} -P " \
+        ipmitool_command = "ipmitool -I {intf} -U {user} -P " \
                            "{password} -H {host} raw 0x04 0x2d {sn}".\
-            format(user=self._user, password=self._password,
+            format(user=self._user, intf=self._intf, password=self._password,
                    host=self._host, sn=sensor_number)
 
         command_exit_status, command_output = self.run_command(ipmitool_command,
@@ -789,11 +793,13 @@ def main():
                              help="Server BMC username")
     parser_dump.add_argument("-P", "--password", action="store", required=True,
                              help="Server BMC password")
+    parser_dump.add_argument("-I", "--intf", action="store", default="lanplus",
+                             help="Interface to use")
     parser_dump.add_argument("--fru-ids", action="store", required=False, nargs='*',
                              help="FRU ID")
     parser_dump.add_argument("--dest-folder", action="store", required=False, default=".",
                              help="Target folder for files generated.")
-    parser_dump.add_argument("--ipmitool-folder", action="store", required=False, default="",
+    parser_dump.add_argument("--ipmitool-path", action="store", required=False, default="",
                              help="which version of ipmitool is selected to run")
 
     parser_analyze = subparsers.add_parser("analyze", help="Analyze raw data and generate EMU file")
@@ -817,6 +823,9 @@ def main():
                              help="Server BMC username")
     parser_auto.add_argument("-P", "--password", action="store", required=True,
                              help="Server BMC password")
+    parser_auto.add_argument("-I", "--intf", action="store", default="lanplus",
+                             help="Interface to use")
+
     parser_auto.add_argument("--dest-folder", action="store", required=False, default=".",
                              help="Target folder for files generated.")
     parser_auto.add_argument("--target-emu-file", action="store", required=False,
@@ -859,9 +868,9 @@ def main():
         user = args.username
         password = args.password
         if args.ipmitool_path:
-            fru_obj.set_ipmitool(args.ipmitool_path)
-            sdr_obj.set_ipmitool(args.ipmitool_path)
-            mc_obj.set_ipmitool(args.ipmitool_path)
+            fru_obj.set_ipmitool(args.ipmitool_path, args.intf)
+            sdr_obj.set_ipmitool(args.ipmitool_path, args.intf)
+            mc_obj.set_ipmitool(args.ipmitool_path, args.intf)
 
         fru_obj.set_bmc_info(host, user, password)
         sdr_obj.set_bmc_info(host, user, password)
