@@ -55,7 +55,7 @@ class Base(object):
         self._host = None
         self._user = None
         self._password = None
-        self._intf = None
+        self._intf = "lanplus"
         self._ipmitool = "ipmitool"
 
     def __call__(self):
@@ -67,8 +67,11 @@ class Base(object):
         self._password = password
 
     def set_ipmitool(self, ipmitool_path, intf):
-        self._ipmitool = ipmitool_path
-        self._intf = intf
+        if ipmitool_path:
+            self._ipmitool = ipmitool_path
+
+        if intf:
+            self._intf = intf
 
     def get_string(self):
         return self._string.output_string()
@@ -930,10 +933,10 @@ def main():
         host = args.host
         user = args.username
         password = args.password
-        if args.ipmitool_path:
-            fru_obj.set_ipmitool(args.ipmitool_path, args.intf)
-            sdr_obj.set_ipmitool(args.ipmitool_path, args.intf)
-            mc_obj.set_ipmitool(args.ipmitool_path, args.intf)
+
+        fru_obj.set_ipmitool(args.ipmitool_path, args.intf)
+        sdr_obj.set_ipmitool(args.ipmitool_path, args.intf)
+        mc_obj.set_ipmitool(args.ipmitool_path, args.intf)
 
         fru_obj.set_bmc_info(host, user, password)
         sdr_obj.set_bmc_info(host, user, password)
