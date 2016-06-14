@@ -173,8 +173,8 @@ class MC(Base):
                     self.device_revision = line.split(":")[1].strip()
                 elif "Firmware Revision" in line:
                     firmware_version = line.split(":")[1].strip().split(".")
-                    self.fw_major = firmware_version[0]
-                    self.fw_minor = firmware_version[1]
+                    self.fw_major = firmware_version[0].lstrip("0")
+                    self.fw_minor = firmware_version[1].lstrip("0")
                 elif "Manufacturer ID" in line:
                     self.manufacture_id = line.split(":")[1].strip()
                 elif "Product ID" in line:
