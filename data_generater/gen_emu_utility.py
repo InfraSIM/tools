@@ -389,6 +389,23 @@ class SDR(Base):
 
         return command_output
 
+    def __get_sensor_current_thresholds(self, sensor_number):
+        if self._host is None or self._user is None or self._password is None:
+            return None
+
+        ipmitool_command = "ipmitool -I {intf} -U {user} -P " \
+                           "{password} -H {host} raw 0x04 0x27 {sn}".\
+            format(user=self._user, intf=self._intf, password=self._password,
+                   host=self._host, sn=sensor_number)
+
+        command_exit_status, command_output = self.run_command(ipmitool_command,
+                                                               stdout=subprocess.PIPE,
+                                                               stderr=subprocess.PIPE)
+        if command_exit_status != 0:
+            return None
+
+        return command_output
+
     def print_sdr_header(self, header):
         print "-----TYPE {}-----".format(hex(header[2]))
         print "Record ID: {0}".format(hex(header[0]))
@@ -446,14 +463,14 @@ class SDR(Base):
         return sensor_add_cmd
 
     def __format_sensor_set_threshold(self, *args):
-        (sensor_owner_id, lun, sensor_number, threshold_support, readable_threshold_mask,
+        (sensor_owner_id, lun, sensor_number, threshold_support, threshold_mask,
          unr_thres, uc_thres, unc_thres, lnr_thres, lc_thres, lnc_thres) = args
 
         set_threshold_command = "sensor_set_threshold {mc} {lun} {sensor_num:#04x} " \
                                 "{support} {enable:06b} {v5:#04x} {v4:#04x} {v3:#04x} " \
                                 "{v2:#04x} {v1:#04x} {v0:#04x}".\
             format(mc=hex(sensor_owner_id), lun=hex(lun), sensor_num=sensor_number,
-                   support=threshold_support, enable=readable_threshold_mask,
+                   support=threshold_support, enable=threshold_mask,
                    v5=unr_thres, v4=uc_thres, v3=unc_thres, v2=lnr_thres,
                    v1=lc_thres, v0=lnc_thres)
         return set_threshold_command
@@ -597,9 +614,41 @@ class SDR(Base):
                 # The most significant bit is reserved
                 event_status_data &= 0x7fff
 
+            threshold_output = self.__get_sensor_current_thresholds(sensor_number)
+            if threshold_output is not None:
+                threshold_output_list = threshold_output.strip().split()
+                current_threshold_mask = int(threshold_output_list[0], 16)
+                v_lnc = int(threshold_output_list[1], 16)
+                v_lc = int(threshold_output_list[2], 16)
+                v_lnr = int(threshold_output_list[3], 16)
+                v_unc = int(threshold_output_list[4], 16)
+                v_uc = int(threshold_output_list[5], 16)
+                v_unr = int(threshold_output_list[6], 16)
+
+                # If the thresholds are different with the current thresholds, update them
+                lnc_thres = v_lnc if lnc_thres != v_lnc else lnc_thres
+                lc_thres = v_lc if lc_thres != v_lc else lc_thres
+                lnr_thres = v_lnr if lnr_thres != v_lnr else lnr_thres
+                unc_thres = v_unc if unc_thres != v_unc else unc_thres
+                uc_thres = v_uc if uc_thres != v_uc else uc_thres
+                unr_thres = v_unr if unr_thres != v_unr else unr_thres
+
+                # From the SDRs we can see some sensors don't suport threshold access,
+                # but they still could be accessed through Get Sensor Thresholds command.
+                # When this happens, need sync the threshold support with the threshold support in
+                # in Get Sensor Thresholds command response
+                if current_threshold_mask != 0 and threshold_access_support == 0x0:
+                    # Revise the threshold access support
+                    threshold_access_support = 0x1
+
+                if readable_threshold_mask != current_threshold_mask:
+                    readable_threshold_mask = current_threshold_mask
+
+
         sensor_add_cmd = self.__format_sensor_add(sensor_owner_id, lun,
                                                   sensor_number, sensor_type,
                                                   event_reading_code)
+
         if threshold_access_support == 0x0:
             threshold_support = "none"
         elif threshold_access_support == 0x1:
@@ -636,9 +685,10 @@ class SDR(Base):
 
         set_threshold_command = None
         if event_reading_code == 0x1:
+            threshold_mask = settable_threshold_mask if threshold_support == "settable" else  readable_threshold_mask
             set_threshold_command = self.__format_sensor_set_threshold(
                 sensor_owner_id, lun, sensor_number, threshold_support,
-                readable_threshold_mask, unr_thres, uc_thres, unc_thres,
+                threshold_mask, unr_thres, uc_thres, unc_thres,
                 lnr_thres, lc_thres, lnc_thres)
 
         set_value_command = self.__format_sensor_set_value(
