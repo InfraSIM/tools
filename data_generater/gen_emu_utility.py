@@ -55,7 +55,7 @@ class Base(object):
         self._host = None
         self._user = None
         self._password = None
-        self._intf = None
+        self._intf = "lanplus"
         self._ipmitool = "ipmitool"
 
     def __call__(self):
@@ -67,8 +67,11 @@ class Base(object):
         self._password = password
 
     def set_ipmitool(self, ipmitool_path, intf):
-        self._ipmitool = ipmitool_path
-        self._intf = intf
+        if ipmitool_path:
+            self._ipmitool = ipmitool_path
+
+        if intf:
+            self._intf = intf
 
     def get_string(self):
         return self._string.output_string()
@@ -371,7 +374,7 @@ class SDR(Base):
 
     def __get_sensor_current_value(self, sensor_number):
         if self._host is None or self._user is None or self._password is None:
-            raise ValueError("Missing host info")
+            return None
 
         ipmitool_command = "ipmitool -I {intf} -U {user} -P " \
                            "{password} -H {host} raw 0x04 0x2d {sn}".\
@@ -382,10 +385,26 @@ class SDR(Base):
                                                                stdout=subprocess.PIPE,
                                                                stderr=subprocess.PIPE)
         if command_exit_status != 0:
-            return 0  # some sensors can't get its value, return 0 instead
+            return None
 
-        value = command_output.strip().split()[0]
-        return int(value, 16)
+        return command_output
+
+    def __get_sensor_current_thresholds(self, sensor_number):
+        if self._host is None or self._user is None or self._password is None:
+            return None
+
+        ipmitool_command = "ipmitool -I {intf} -U {user} -P " \
+                           "{password} -H {host} raw 0x04 0x27 {sn}".\
+            format(user=self._user, intf=self._intf, password=self._password,
+                   host=self._host, sn=sensor_number)
+
+        command_exit_status, command_output = self.run_command(ipmitool_command,
+                                                               stdout=subprocess.PIPE,
+                                                               stderr=subprocess.PIPE)
+        if command_exit_status != 0:
+            return None
+
+        return command_output
 
     def print_sdr_header(self, header):
         print "-----TYPE {}-----".format(hex(header[2]))
@@ -444,14 +463,14 @@ class SDR(Base):
         return sensor_add_cmd
 
     def __format_sensor_set_threshold(self, *args):
-        (sensor_owner_id, lun, sensor_number, threshold_support, readable_threshold_mask,
+        (sensor_owner_id, lun, sensor_number, threshold_support, threshold_mask,
          unr_thres, uc_thres, unc_thres, lnr_thres, lc_thres, lnc_thres) = args
 
         set_threshold_command = "sensor_set_threshold {mc} {lun} {sensor_num:#04x} " \
                                 "{support} {enable:06b} {v5:#04x} {v4:#04x} {v3:#04x} " \
                                 "{v2:#04x} {v1:#04x} {v0:#04x}".\
             format(mc=hex(sensor_owner_id), lun=hex(lun), sensor_num=sensor_number,
-                   support=threshold_support, enable=readable_threshold_mask,
+                   support=threshold_support, enable=threshold_mask,
                    v5=unr_thres, v4=uc_thres, v3=unc_thres, v2=lnr_thres,
                    v1=lc_thres, v0=lnc_thres)
         return set_threshold_command
@@ -482,6 +501,13 @@ class SDR(Base):
                    deassert_enable=deassertion_event_mask)
         return set_event_support_cmd
 
+    def __format_sensor_set_bit(self, sensor_owner_id, lun, sensor_number, bit_to_set,
+                                bit_value, gen_event):
+        sensor_set_bit_cmd = "sensor_set_bit {mc} {lun} {sn:#04x} {bit} {v} {en}".\
+            format(mc=hex(sensor_owner_id), lun=hex(lun),
+                   sn=sensor_number, bit=bit_to_set, v=bit_value, en=gen_event)
+        return sensor_set_bit_cmd
+
     def __add_comment(self, comments):
         pass
 
@@ -507,7 +533,7 @@ class SDR(Base):
         lnr_thres = 0
         lc_thres = 0
         lnc_thres = 0
-        if self.__sdr_type == 0x1:
+        if event_reading_code == 0x1:
             unr_thres = int(body[31], 16)
             uc_thres = int(body[32], 16)
             unc_thres = int(body[33], 16)
@@ -520,9 +546,22 @@ class SDR(Base):
 
         sensor_event_message_control_support = int(body[6], 16) & 0x3
 
-        events_enable_bit = (int(body[5], 16) & 0x2) >> 1
-        scanning_enable_bit = int(body[5], 16) & 0x1
+        # init events
+        events_enable_bit = (int(body[5], 16) & 0x20) >> 5
+        # init scanning
+        scanning_enable_bit = (int(body[5], 16) & 0x40) >> 6
 
+        id_len_offset = 0
+        if self.__sdr_type == 0x1:
+            id_len_offset = 42
+        else:
+            id_len_offset = 26
+
+        id_string_len = int(body[id_len_offset], 16) & 0xf
+        id_string = ""
+        id_string_start_offset = id_len_offset + 1
+        for index in xrange(0, id_string_len):
+            id_string += chr(int(body[id_string_start_offset + index], 16))
         if DEBUG:
             print "Sensor Owner ID: {}".format(hex(sensor_owner_id))
             print "Sensor Owner LUN (channel/LUN): {}/{}".format(channel, lun)
@@ -539,11 +578,77 @@ class SDR(Base):
             print "Sensor Event Message Control Support: {0:#x}".format(
                 sensor_event_message_control_support)
             print "Sensor Initialization: {}".format(body[5])
+            print "Init Events: {:b}".format(events_enable_bit)
+            print "Init Scanning: {:b}".format(scanning_enable_bit)
+            print "ID string length: {}".format(id_string_len)
+            print "Sensor ID: {}".format(id_string)
             print
+
+        sensor_current_value = 0
+        event_status_data = 0
+        if self.__action == "auto":
+            raw_output = self.__get_sensor_current_value(sensor_number)
+            if raw_output is not None:
+                raw_output_list = raw_output.strip().split()
+                sensor_current_value = int(raw_output_list[0], 16)
+                # events enable bit in Get Sensor Reading response
+                events_enable_bit = (int(raw_output_list[1], 16) & 0x80) >> 7
+                # scanning enable bit in Get Sensor Reading response
+                scanning_enable_bit = (int(raw_output_list[1], 16) & 0x40) >> 6
+
+                # Currently lanserv doens't handle this bit, the bit is always 0 in the response
+                # for Get Sensor Reading command
+                reading_or_state_unavailable = (int(raw_output_list[1], 16) & 0x20) >> 5
+
+                # workaround for reading/state unavailable bit (bit 5) in Get Sensor Reading command response
+                # some sensors are unavaialble on physical platform, but ipmi sim couldn't handle such cases.
+                # all the sensors are in working state which causing inconsistent with sensors on physical platform
+                # TODO: made changes in ipmi sim to support unavailable sensors.
+                # Currently these sensors will cause lots of SEL entries when ipmi sim is up, so if the bit is set,
+                # then don't enable event for this sensor
+                if reading_or_state_unavailable:
+                    events_enable_bit = 0
+
+                for index in xrange(0, len(raw_output_list[2:])):
+                    event_status_data |= (int(raw_output_list[2+index], 16) << (index*8))
+                # The most significant bit is reserved
+                event_status_data &= 0x7fff
+
+            threshold_output = self.__get_sensor_current_thresholds(sensor_number)
+            if threshold_output is not None:
+                threshold_output_list = threshold_output.strip().split()
+                current_threshold_mask = int(threshold_output_list[0], 16)
+                v_lnc = int(threshold_output_list[1], 16)
+                v_lc = int(threshold_output_list[2], 16)
+                v_lnr = int(threshold_output_list[3], 16)
+                v_unc = int(threshold_output_list[4], 16)
+                v_uc = int(threshold_output_list[5], 16)
+                v_unr = int(threshold_output_list[6], 16)
+
+                # If the thresholds are different with the current thresholds, update them
+                lnc_thres = v_lnc if lnc_thres != v_lnc else lnc_thres
+                lc_thres = v_lc if lc_thres != v_lc else lc_thres
+                lnr_thres = v_lnr if lnr_thres != v_lnr else lnr_thres
+                unc_thres = v_unc if unc_thres != v_unc else unc_thres
+                uc_thres = v_uc if uc_thres != v_uc else uc_thres
+                unr_thres = v_unr if unr_thres != v_unr else unr_thres
+
+                # From the SDRs we can see some sensors don't suport threshold access,
+                # but they still could be accessed through Get Sensor Thresholds command.
+                # When this happens, need sync the threshold support with the threshold support in
+                # in Get Sensor Thresholds command response
+                if current_threshold_mask != 0 and threshold_access_support == 0x0:
+                    # Revise the threshold access support
+                    threshold_access_support = 0x1
+
+                if readable_threshold_mask != current_threshold_mask:
+                    readable_threshold_mask = current_threshold_mask
+
 
         sensor_add_cmd = self.__format_sensor_add(sensor_owner_id, lun,
                                                   sensor_number, sensor_type,
                                                   event_reading_code)
+
         if threshold_access_support == 0x0:
             threshold_support = "none"
         elif threshold_access_support == 0x1:
@@ -578,18 +683,13 @@ class SDR(Base):
 
         main_sdr_add_cmd = self.__format_main_sdr_add(body)
 
-        set_threshold_command = self.__format_sensor_set_threshold(
-            sensor_owner_id, lun, sensor_number, threshold_support,
-            readable_threshold_mask, unr_thres, uc_thres, unc_thres,
-            lnr_thres, lc_thres, lnc_thres)
-
-        sensor_current_value = 0
-        if self.__action == "auto":
-            try:
-                sensor_current_value = self.__get_sensor_current_value(sensor_number)
-            except ValueError:
-                sensor_current_value = 0
-                pass
+        set_threshold_command = None
+        if event_reading_code == 0x1:
+            threshold_mask = settable_threshold_mask if threshold_support == "settable" else  readable_threshold_mask
+            set_threshold_command = self.__format_sensor_set_threshold(
+                sensor_owner_id, lun, sensor_number, threshold_support,
+                threshold_mask, unr_thres, uc_thres, unc_thres,
+                lnr_thres, lc_thres, lnc_thres)
 
         set_value_command = self.__format_sensor_set_value(
             sensor_owner_id, lun, sensor_number,
@@ -599,13 +699,25 @@ class SDR(Base):
             sensor_owner_id, lun, sensor_number, events_enable, scanning,
             event_support, assertion_event_mask, deassertion_event_mask)
 
-        comments = "# Add sensor {}{}".format(sensor_number, os.linesep)
+        comments = "# Add sensor {0}({1}){2}".format(sensor_number, id_string, os.linesep)
         self._string.add_string(comments)
         self._string.add_string(sensor_add_cmd)
         self._string.add_string(main_sdr_add_cmd)
         self._string.add_string(set_value_command)
-        self._string.add_string(set_threshold_command)
+        if set_threshold_command:
+            self._string.add_string(set_threshold_command)
         self._string.add_string(set_event_support_cmd)
+
+        if event_status_data != 0x0:
+            for bit in xrange(0, 14):
+                bit_value = (event_status_data & (1 << bit)) >> bit
+                if bit_value != 0:
+                    sensor_set_bit_command = self.__format_sensor_set_bit(sensor_owner_id,
+                                                                            lun, sensor_number,
+                                                                            bit, bit_value,
+                                                                            events_enable_bit)
+                    self._string.add_string(sensor_set_bit_command)
+
         self._string.add_string(os.linesep)
 
     # SDR Type 0x3
@@ -713,6 +825,8 @@ class SDR(Base):
         else:
             print "Ignore SDR type: {0:#04x}".format(self.__sdr_type)
 
+    def handle_sdr_type20(self, body):
+        print "Ignore type {}".format(self.__sdr_type)
     # SDR Type 0xC0
     def handle_sdr_type192(self, body):
         if DEBUG:
@@ -747,6 +861,8 @@ class SDR(Base):
             self.handle_sdr_type18(body_data)
         elif record_type == 0x13:  # Management Controller Confirmation Record
             self.handle_sdr_type19(body_data)
+        elif record_type == 0x14:
+            self.handle_sdr_type20(body_data)
         elif record_type == 0xc0:  # OEM Record
             self.handle_sdr_type192(body_data)
         else:
@@ -867,10 +983,10 @@ def main():
         host = args.host
         user = args.username
         password = args.password
-        if args.ipmitool_path:
-            fru_obj.set_ipmitool(args.ipmitool_path, args.intf)
-            sdr_obj.set_ipmitool(args.ipmitool_path, args.intf)
-            mc_obj.set_ipmitool(args.ipmitool_path, args.intf)
+
+        fru_obj.set_ipmitool(args.ipmitool_path, args.intf)
+        sdr_obj.set_ipmitool(args.ipmitool_path, args.intf)
+        mc_obj.set_ipmitool(args.ipmitool_path, args.intf)
 
         fru_obj.set_bmc_info(host, user, password)
         sdr_obj.set_bmc_info(host, user, password)
