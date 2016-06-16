@@ -55,8 +55,8 @@ class Base(object):
         self._host = None
         self._user = None
         self._password = None
-        self._intf = "lanplus"
-        self._ipmitool = "ipmitool"
+        self._intf = None
+        self._ipmitool = None
 
     def __call__(self):
         return self._string()
@@ -67,11 +67,8 @@ class Base(object):
         self._password = password
 
     def set_ipmitool(self, ipmitool_path, intf):
-        if ipmitool_path:
-            self._ipmitool = ipmitool_path
-
-        if intf:
-            self._intf = intf
+        self._ipmitool = ipmitool_path
+        self._intf = intf
 
     def get_string(self):
         return self._string.output_string()
@@ -551,7 +548,6 @@ class SDR(Base):
         # init scanning
         scanning_enable_bit = (int(body[5], 16) & 0x40) >> 6
 
-        id_len_offset = 0
         if self.__sdr_type == 0x1:
             id_len_offset = 42
         else:
@@ -596,12 +592,12 @@ class SDR(Base):
                 # scanning enable bit in Get Sensor Reading response
                 scanning_enable_bit = (int(raw_output_list[1], 16) & 0x40) >> 6
 
-                # Currently lanserv doens't handle this bit, the bit is always 0 in the response
+                # Currently lanserv doesn't handle this bit, the bit is always 0 in the response
                 # for Get Sensor Reading command
                 reading_or_state_unavailable = (int(raw_output_list[1], 16) & 0x20) >> 5
 
                 # workaround for reading/state unavailable bit (bit 5) in Get Sensor Reading command response
-                # some sensors are unavaialble on physical platform, but ipmi sim couldn't handle such cases.
+                # some sensors are unavailable on physical platform, but ipmi sim couldn't handle such cases.
                 # all the sensors are in working state which causing inconsistent with sensors on physical platform
                 # TODO: made changes in ipmi sim to support unavailable sensors.
                 # Currently these sensors will cause lots of SEL entries when ipmi sim is up, so if the bit is set,
@@ -643,7 +639,6 @@ class SDR(Base):
 
                 if readable_threshold_mask != current_threshold_mask:
                     readable_threshold_mask = current_threshold_mask
-
 
         sensor_add_cmd = self.__format_sensor_add(sensor_owner_id, lun,
                                                   sensor_number, sensor_type,
@@ -827,6 +822,7 @@ class SDR(Base):
 
     def handle_sdr_type20(self, body):
         print "Ignore type {}".format(self.__sdr_type)
+
     # SDR Type 0xC0
     def handle_sdr_type192(self, body):
         if DEBUG:
@@ -915,7 +911,7 @@ def main():
                              help="FRU ID")
     parser_dump.add_argument("--dest-folder", action="store", required=False, default=".",
                              help="Target folder for files generated.")
-    parser_dump.add_argument("--ipmitool-path", action="store", required=False, default="",
+    parser_dump.add_argument("--ipmitool-path", action="store", required=False, default="ipmitool",
                              help="which version of ipmitool is selected to run")
 
     parser_analyze = subparsers.add_parser("analyze", help="Analyze raw data and generate EMU file")
@@ -946,7 +942,7 @@ def main():
                              help="Target folder for files generated.")
     parser_auto.add_argument("--target-emu-file", action="store", required=False,
                              help="Target emu file")
-    parser_auto.add_argument("--ipmitool-path", action="store", required=False, default="",
+    parser_auto.add_argument("--ipmitool-path", action="store", required=False, default="ipmitool",
                              help="which version of ipmitool is selected to run")
 
     args = parser.parse_args()
