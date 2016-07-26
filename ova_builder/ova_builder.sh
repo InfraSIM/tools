@@ -189,7 +189,7 @@ if [ "$NODE_TYPE" = "hawk" -o "$NODE_TYPE" = "sentry" ];then
     ovftool --compress vmx/vpdu.vmx $target_ova
 else
 
-    VIRTUAL_DISK_SIZE=8 #unit: Gigabyte
+    VIRTUAL_DISK_SIZE=64 #unit: Gigabyte
 
     #Create two disks
     for i in $(seq 1 2);do
