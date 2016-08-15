@@ -1,0 +1,90 @@
+{
+    "variables": {
+        "disk_size": "40960",
+        "iso_url": "http://releases.ubuntu.com/16.04/ubuntu-16.04-server-amd64.iso",
+        "archive": "vmware-infrasim",
+        "gui_disable": "true",
+        "memsize": "4096",
+        "coresPerSocket": "1",
+        "numvcpus": "2",
+        "nic_name": "vmxnet3",
+        "nic_number": "160"
+    },
+    "provisioners": [
+        {
+            "type": "shell",
+            "scripts": [
+                "scripts/base.sh",
+                "scripts/dep.sh",
+                "scripts/vmware.sh",
+                "scripts/dhcp_setting.sh",
+                "scripts/infrasim-compute.sh",
+                "scripts/cleanup.sh"
+            ],
+            "execute_command": "echo 'vagrant'|sudo -S bash '{{.Path}}'"
+        }
+    ],
+    "builders": [
+        {
+            "type": "vmware-iso",
+            "boot_command": [
+                "<enter><wait><f6><esc>",
+                "<bs><bs><bs><bs><bs><bs><bs><bs>",
+                "<bs><bs><bs><bs><bs><bs><bs><bs>",
+                "<bs><bs><bs><bs><bs><bs><bs><bs>",
+                "<bs><bs><bs><bs><bs><bs><bs><bs>",
+                "<bs><bs><bs><bs><bs><bs><bs><bs>",
+                "<bs><bs><bs><bs><bs><bs><bs><bs>",
+                "<bs><bs><bs><bs><bs><bs><bs><bs>",
+                "<bs><bs><bs><bs><bs><bs><bs><bs>",
+                "<bs><bs><bs><bs><bs><bs><bs><bs>",
+                "<bs><bs><bs><bs><bs><bs><bs><bs>",
+                "<bs><bs><bs>",
+                "/install/vmlinuz<wait>",
+                " auto=true",
+                " console-setup/ask_detect=false<wait>",
+                " console-setup/layoutcode=us<wait>",
+                " console-setup/modelcode=pc105<wait>",
+                " debconf/frontend=noninteractive<wait>",
+                " debian-installer=en_US<wait>",
+                " fb=false<wait>",
+                " initrd=/install/initrd.gz<wait>",
+                " kbd-chooser/method=us<wait>",
+                " keyboard-configuration/layout=USA<wait>",
+                " keyboard-configuration/variant=USA<wait>",
+                " locale=en_US<wait>",
+                " netcfg/get_hostname=infrasim<wait>",
+                " noapic<wait>",
+                " preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg<wait>",
+                " -- <wait>",
+                "<enter><wait>"
+            ],
+            "boot_wait": "20s",
+            "disk_size": "{{ user `disk_size` }}",
+            "guest_os_type": "ubuntu-64",
+            "http_directory": "http",
+            "iso_checksum": "23e97cd5d4145d4105fbf29878534049",
+            "iso_checksum_type": "md5",
+            "iso_url": "{{ user `iso_url` }}",
+            "output_directory": "{{ user `archive` }}",
+            "ssh_username": "vagrant",
+            "ssh_password": "vagrant",
+            "ssh_port": 22,
+	        "headless": "{{ user `gui_disable` }}",
+            "ssh_wait_timeout": "10000s",
+            "shutdown_command": "echo 'vagrant' | sudo -S shutdown -P now",
+            "vmx_data": {
+                "memsize": "{{ user `memsize` }}",
+	            "cpuid.coresPerSocket": "{{ user `coresPerSocket` }}",
+                "numvcpus": "{{ user `numvcpus` }}"
+            },
+            "vmx_data_post":{
+                "displayname": "infrasim-compute",
+                "ethernet0.networkName": "CONTROL",
+                "ethernet0.virtualDev": "{{ user `nic_name` }}",
+                "ethernet0.present": "TRUE",
+                "ethernet0.pcislotnumber": "{{ user `nic_num` }}"
+            }
+        }
+    ]
+}
