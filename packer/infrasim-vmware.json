@@ -8,7 +8,8 @@
         "coresPerSocket": "1",
         "numvcpus": "2",
         "nic_name": "vmxnet3",
-        "nic_number": "160"
+        "nic0_number": "160",
+        "nic1_number": "192"
     },
     "provisioners": [
         {
@@ -55,6 +56,8 @@
                 " locale=en_US<wait>",
                 " netcfg/get_hostname=infrasim<wait>",
                 " noapic<wait>",
+                " interface=ens160<wait>",
+                " netcfg/choose_interface=ens160<wait>",
                 " preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg<wait>",
                 " -- <wait>",
                 "<enter><wait>"
@@ -80,10 +83,14 @@
             },
             "vmx_data_post":{
                 "displayname": "infrasim-compute",
-                "ethernet0.networkName": "CONTROL",
+                "ethernet0.networkName": "ADMIN",
                 "ethernet0.virtualDev": "{{ user `nic_name` }}",
                 "ethernet0.present": "TRUE",
-                "ethernet0.pcislotnumber": "{{ user `nic_num` }}"
+                "ethernet0.pcislotnumber": "{{ user `nic0_num` }}",
+                "ethernet1.networkName": "CONTROL",
+                "ethernet1.virtualDev": "{{ user `nic_name` }}",
+                "ethernet1.present": "TRUE",
+                "ethernet1.pcislotnumber": "{{ user `nic1_num` }}"
             }
         }
     ]

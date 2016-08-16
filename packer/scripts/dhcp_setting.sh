@@ -15,5 +15,8 @@ iface lo inet loopback
 auto ens160
 iface ens160 inet dhcp
 
+auto ens192
+iface ens192 inet dhcp
+
 source /etc/network/interfaces.d/*.cfg
 EOF
