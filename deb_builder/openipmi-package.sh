@@ -10,7 +10,7 @@ die() {
 }
 
 usage() {
-    echo "$0 [--package-type] [--source-path] [--pkgname] [--pkgversion] [--pkgrelease]"
+    echo "$0 [--source-path] [--pkgname] [--pkgversion] [--pkgrelease]"
     exit 0
 }
 
@@ -25,7 +25,6 @@ src=""
 while [ $# -gt 0 ]; do
     option=$1
     case $option in
-    --package-type) type=$2;shift ;;
     --source-path) src=$2;shift ;;
     --pkgname) pkgname=$2;shift ;;
     --pkgversion) pkgversion=$2;shift ;;
