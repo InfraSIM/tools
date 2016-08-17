@@ -9,7 +9,9 @@
         "numvcpus": "2",
         "nic_name": "vmxnet3",
         "nic0_number": "160",
-        "nic1_number": "192"
+        "nic1_number": "192",
+        "nic2_number": "224",
+        "nic3_number": "256"
     },
     "provisioners": [
         {
@@ -83,14 +85,22 @@
             },
             "vmx_data_post":{
                 "displayname": "infrasim-compute",
-                "ethernet0.networkName": "ADMIN",
+                "ethernet0.networkName": "CONTROL",
                 "ethernet0.virtualDev": "{{ user `nic_name` }}",
                 "ethernet0.present": "TRUE",
                 "ethernet0.pcislotnumber": "{{ user `nic0_num` }}",
-                "ethernet1.networkName": "CONTROL",
+                "ethernet1.networkName": "BMC",
                 "ethernet1.virtualDev": "{{ user `nic_name` }}",
                 "ethernet1.present": "TRUE",
-                "ethernet1.pcislotnumber": "{{ user `nic1_num` }}"
+                "ethernet1.pcislotnumber": "{{ user `nic1_num` }}",
+                "ethernet2.networkName": "DATA",
+                "ethernet2.virtualDev": "{{ user `nic_name` }}",
+                "ethernet2.present": "TRUE",
+                "ethernet2.pcislotnumber": "{{ user `nic2_num` }}",
+                "ethernet3.networkName": "ADMIN",
+                "ethernet3.virtualDev": "{{ user `nic_name` }}",
+                "ethernet3.present": "TRUE",
+                "ethernet3.pcislotnumber": "{{ user `nic3_num` }}"
             }
         }
     ]

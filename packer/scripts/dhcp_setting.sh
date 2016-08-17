@@ -18,5 +18,11 @@ iface ens160 inet dhcp
 auto ens192
 iface ens192 inet dhcp
 
+auto ens224
+iface ens224 inet dhcp
+
+auto ens256
+iface ens256 inet dhcp
+
 source /etc/network/interfaces.d/*.cfg
 EOF
