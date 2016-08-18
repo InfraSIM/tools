@@ -11,4 +11,5 @@ virtualbox_builder     | Script to quickly build an compute node image on virtua
 vmworkstation_builder  | Script to quickly build an compute node image on vmworkstation platform.
 vmx                    | Script to build an compute node image with vmx type. 
 data_generater         | Script to generate the fru and sensor data for the new node simulation.
-fru_data_parser        | Lib to read and write emu file, aka, ipmi\_sim\_cmd set. Can operate FRU data command in a human readable means now. 
+fru_data_parser        | Lib to read and write emu file, aka, ipmi\_sim\_cmd set. Can operate FRU data command in a human readable means now.
+deb_builder            | Script to build deb package. 
