@@ -43,7 +43,7 @@ done
 pushd $src
 
 #[ -f Makefile ] && make distclean
-./configure --prefix=/usr --target-list=${ARCH}-linux-user,${ARCH}-softmmu \
+./configure --prefix=/usr/local --target-list=${ARCH}-linux-user,${ARCH}-softmmu \
     --disable-smartcard --disable-seccomp --disable-glusterfs --disable-tpm \
     --disable-vhdx --disable-bluez --disable-gtk --disable-cocoa --disable-sdl \
     --without-system-pixman 
@@ -59,7 +59,6 @@ $CHECKINSTALL -D -y \
     --pkgversion=$pkgversion \
     --pkgrelease=$pkgrelease \
     --exclude="/home" \
-    #--requires=libxen-dev \
     --maintainer="InfraSIM Team <infrasim@googlegroups.com>" \
     make install
 

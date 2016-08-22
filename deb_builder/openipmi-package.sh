@@ -44,7 +44,7 @@ pushd $src
 
 [ -f Makefile ] && make distclean
 autoreconf -i
-./configure CFLAGS="-lrt -lpthread" --prefix=/ --with-tcl=no
+./configure CFLAGS="-lrt -lpthread" --prefix=/usr/local --with-tcl=no
 make -j${JOBS}
 
 $CHECKINSTALL -D -y \
