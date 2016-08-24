@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ecno "cleaning up dhcp leases"
+echo "cleaning up dhcp leases"
 rm -f /var/lib/dhcp/*
 echo "Base network interface config"
 cat > /etc/network/interfaces << EOF

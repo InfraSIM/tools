@@ -19,7 +19,6 @@
             "scripts": [
                 "scripts/base.sh",
                 "scripts/dep.sh",
-                "scripts/vmware.sh",
                 "scripts/dhcp_setting.sh",
                 "scripts/infrasim-compute.sh",
                 "scripts/cleanup.sh"
