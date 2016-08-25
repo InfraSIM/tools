@@ -45,7 +45,7 @@ pushd $src
 #[ -f Makefile ] && make distclean
 ./configure --prefix=/usr/local --target-list=${ARCH}-linux-user,${ARCH}-softmmu \
     --disable-smartcard --disable-seccomp --disable-glusterfs --disable-tpm \
-    --disable-vhdx --disable-bluez --disable-gtk --disable-cocoa --disable-sdl \
+    --disable-vhdx --disable-bluez --disable-gtk --disable-cocoa --disable-sdl --disable-xen \
     --without-system-pixman 
 make -j${JOBS}
 
