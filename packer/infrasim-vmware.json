@@ -20,6 +20,7 @@
                 "scripts/base.sh",
                 "scripts/dep.sh",
                 "scripts/dhcp_setting.sh",
+                "scripts/vmware.sh",
                 "scripts/infrasim-compute.sh",
                 "scripts/cleanup.sh"
             ],
