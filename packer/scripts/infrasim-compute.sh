@@ -2,7 +2,7 @@
 
 export LC_ALL=C
 
-# instal dependency for infrasim-compute
+# install dependency for infrasim-compute
 apt-get install -y python-pip libssl-dev libpython-dev git
 
 pip install setuptools
@@ -18,3 +18,4 @@ sleep 1
 
 # init infrasim service
 infrasim-init
+wget https://raw.githubusercontent.com/InfraSIM/tools/master/packer/infrasim.yml -O /usr/local/infrasim/etc/infrasim.yml -q
