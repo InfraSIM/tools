@@ -24,7 +24,7 @@
                 "scripts/infrasim-compute.sh",
                 "scripts/cleanup.sh"
             ],
-            "execute_command": "echo 'vagrant'|sudo -S bash '{{.Path}}'"
+            "execute_command": "echo 'infrasim'|sudo -S bash '{{.Path}}'"
         }
     ],
     "builders": [
@@ -72,12 +72,12 @@
             "iso_checksum_type": "md5",
             "iso_url": "{{ user `iso_url` }}",
             "output_directory": "{{ user `archive` }}",
-            "ssh_username": "vagrant",
-            "ssh_password": "vagrant",
+            "ssh_username": "infrasim",
+            "ssh_password": "infrasim",
             "ssh_port": 22,
 	        "headless": "{{ user `gui_disable` }}",
             "ssh_wait_timeout": "10000s",
-            "shutdown_command": "echo 'vagrant' | sudo -S shutdown -P now",
+            "shutdown_command": "echo 'infrasim' | sudo -S shutdown -P now",
             "vmx_data": {
                 "memsize": "{{ user `memsize` }}",
 	            "cpuid.coresPerSocket": "{{ user `coresPerSocket` }}",
