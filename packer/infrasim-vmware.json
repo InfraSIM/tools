@@ -4,7 +4,7 @@
         "iso_url": "http://releases.ubuntu.com/16.04/ubuntu-16.04-server-amd64.iso",
         "archive": "vmware-infrasim",
         "gui_disable": "true",
-        "memsize": "4096",
+        "memsize": "8192",
         "coresPerSocket": "1",
         "numvcpus": "2",
         "nic_name": "vmxnet3",
