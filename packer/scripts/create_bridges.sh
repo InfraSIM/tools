@@ -19,4 +19,4 @@ bridge_stp off
 source /etc/network/interfaces.d/*.cfg
 
 EOF
-apt-get install bridge-utils
+

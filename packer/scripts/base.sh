@@ -33,3 +33,6 @@ GRUB_CMDLINE_LINUX="debian-installer=en_US"
 EOF
 
 update-grub
+
+sed -i "s/TimeoutStartSec.*/TimeoutStartSec=30s/g" /lib/systemd/system/networking.service
+
