@@ -21,6 +21,7 @@
                 "scripts/dep.sh",
                 "scripts/dhcp_setting.sh",
                 "scripts/create_bridges.sh",
+                "scripts/kvm_setting.sh",
                 "scripts/vmware.sh",
                 "scripts/infrasim-compute.sh",
                 "scripts/cleanup.sh"
