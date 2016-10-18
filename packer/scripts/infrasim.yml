@@ -71,3 +71,5 @@ compute:
             device: e1000
 
     # cdrom: /dev/sr0
+bmc:
+    interface: ens192

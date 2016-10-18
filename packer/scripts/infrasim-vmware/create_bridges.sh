@@ -3,14 +3,14 @@
 cat >> /etc/network/interfaces <<EOF
 auto br0
 iface br0 inet dhcp
-bridge_ports ens192
+bridge_ports ens224
 bridge_fd 0
 bridge_hello 1
 bridge_stp off
 
 auto br1
 iface br1 inet dhcp
-bridge_ports ens224
+bridge_ports ens256
 bridge_fd 0
 bridge_hello 1
 bridge_stp off
