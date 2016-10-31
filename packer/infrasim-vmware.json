@@ -19,12 +19,14 @@
             "scripts": [
                 "scripts/base.sh",
                 "scripts/dep.sh",
-                "scripts/dhcp_setting.sh",
-                "scripts/vmware.sh",
+                "scripts/infrasim-vmware/dhcp_setting.sh",
+                "scripts/infrasim-vmware/create_bridges.sh",
+                "scripts/infrasim-vmware/boot_setting.sh",
+                "scripts/infrasim-vmware/vmware.sh",
                 "scripts/infrasim-compute.sh",
                 "scripts/cleanup.sh"
             ],
-            "execute_command": "echo 'vagrant'|sudo -S bash '{{.Path}}'"
+            "execute_command": "echo 'infrasim'|sudo -S bash '{{.Path}}'"
         }
     ],
     "builders": [
@@ -60,7 +62,7 @@
                 " noapic<wait>",
                 " interface=ens160<wait>",
                 " netcfg/choose_interface=ens160<wait>",
-                " preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg<wait>",
+                " preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/infrasim/preseed.cfg<wait>",
                 " -- <wait>",
                 "<enter><wait>"
             ],
@@ -72,12 +74,12 @@
             "iso_checksum_type": "md5",
             "iso_url": "{{ user `iso_url` }}",
             "output_directory": "{{ user `archive` }}",
-            "ssh_username": "vagrant",
-            "ssh_password": "vagrant",
+            "ssh_username": "infrasim",
+            "ssh_password": "infrasim",
             "ssh_port": 22,
 	        "headless": "{{ user `gui_disable` }}",
             "ssh_wait_timeout": "10000s",
-            "shutdown_command": "echo 'vagrant' | sudo -S shutdown -P now",
+            "shutdown_command": "echo 'infrasim' | sudo -S shutdown -P now",
             "vmx_data": {
                 "memsize": "{{ user `memsize` }}",
 	            "cpuid.coresPerSocket": "{{ user `coresPerSocket` }}",
@@ -85,7 +87,7 @@
             },
             "vmx_data_post":{
                 "displayname": "infrasim-compute",
-                "ethernet0.networkName": "CONTROL",
+                "ethernet0.networkName": "ADMIN",
                 "ethernet0.virtualDev": "{{ user `nic_name` }}",
                 "ethernet0.present": "TRUE",
                 "ethernet0.pcislotnumber": "{{ user `nic0_num` }}",
@@ -93,11 +95,11 @@
                 "ethernet1.virtualDev": "{{ user `nic_name` }}",
                 "ethernet1.present": "TRUE",
                 "ethernet1.pcislotnumber": "{{ user `nic1_num` }}",
-                "ethernet2.networkName": "DATA",
+                "ethernet2.networkName": "CONTROL",
                 "ethernet2.virtualDev": "{{ user `nic_name` }}",
                 "ethernet2.present": "TRUE",
                 "ethernet2.pcislotnumber": "{{ user `nic2_num` }}",
-                "ethernet3.networkName": "ADMIN",
+                "ethernet3.networkName": "DATA",
                 "ethernet3.virtualDev": "{{ user `nic_name` }}",
                 "ethernet3.present": "TRUE",
                 "ethernet3.pcislotnumber": "{{ user `nic3_num` }}"

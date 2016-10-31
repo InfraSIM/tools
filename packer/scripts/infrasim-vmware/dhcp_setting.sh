@@ -19,10 +19,11 @@ auto ens192
 iface ens192 inet dhcp
 
 auto ens224
-iface ens224 inet dhcp
+iface ens224 inet static
+address 0.0.0.0
 
 auto ens256
-iface ens256 inet dhcp
+iface ens256 inet static
+address 0.0.0.0
 
-source /etc/network/interfaces.d/*.cfg
 EOF

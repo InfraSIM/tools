@@ -33,3 +33,8 @@ GRUB_CMDLINE_LINUX="debian-installer=en_US"
 EOF
 
 update-grub
+
+# In case your control/data network is not connected to a DHCP yet
+# Here we set the waiting time to 10s to reduce boot time
+sed -i "s/TimeoutStartSec.*/TimeoutStartSec=30s/g" /lib/systemd/system/networking.service
+sed -i "s/^timeout .*/timeout 5;/g" /etc/dhcp/dhclient.conf
