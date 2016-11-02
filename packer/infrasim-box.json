@@ -3,8 +3,8 @@
         "disk_size": "40960",
         "iso_url": "http://releases.ubuntu.com/16.04/ubuntu-16.04-server-amd64.iso",
         "gui_disable": "true",
-        "memsize": "4096",
-        "cpus": "4",
+        "memsize": "5120",
+        "cpus": "2",
         "output": "infrasim-compute.box"
     },
     "provisioners": [
@@ -13,8 +13,13 @@
             "scripts": [
                 "scripts/base.sh",
                 "scripts/dep.sh",
-			    "scripts/vagrant.sh",
+                "scripts/infrasim-box/vagrant.sh",
+                "scripts/infrasim-box/virtualbox.sh",
+                "scripts/infrasim-box/dhcp_setting.sh",
+                "scripts/infrasim-box/create_bridges.sh",
+                "scripts/infrasim-box/boot_setting.sh",
                 "scripts/infrasim-compute.sh",
+                "scripts/infrasim-box/config_change.sh",
                 "scripts/cleanup.sh"
             ],
             "execute_command": "echo 'vagrant'|sudo -S bash '{{.Path}}'"
@@ -51,7 +56,7 @@
                 " locale=en_US<wait>",
                 " netcfg/get_hostname=infrasim<wait>",
                 " noapic<wait>",
-                " preseed/url=http://{{.HTTPIP}}:{{.HTTPPort}}/preseed.cfg<wait>",
+                " preseed/url=http://{{.HTTPIP}}:{{.HTTPPort}}/vagrant/preseed.cfg<wait>",
                 " -- <wait>",
                 "<enter><wait>"
             ],
