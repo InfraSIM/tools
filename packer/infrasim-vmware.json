@@ -23,6 +23,7 @@
                 "scripts/infrasim-vmware/create_bridges.sh",
                 "scripts/infrasim-vmware/boot_setting.sh",
                 "scripts/infrasim-vmware/vmware.sh",
+                "scripts/infrasim-vmware/nested.sh",
                 "scripts/infrasim-compute.sh",
                 "scripts/cleanup.sh"
             ],
