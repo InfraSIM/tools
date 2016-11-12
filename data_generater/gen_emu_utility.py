@@ -369,14 +369,24 @@ class SDR(Base):
             raise IOError("Command {} failed [exit code: {}].".format(
                 ipmitool_sdr_command, command_exit_status))
 
-    def __get_sensor_current_value(self, sensor_number):
+    def __get_sensor_current_value(self, sensor_number, owner_id=MC_ADDRESS):
         if self._host is None or self._user is None or self._password is None:
             return None
 
-        ipmitool_command = "ipmitool -I {intf} -U {user} -P " \
-                           "{password} -H {host} raw 0x04 0x2d {sn}".\
-            format(user=self._user, intf=self._intf, password=self._password,
-                   host=self._host, sn=sensor_number)
+        if owner_id != MC_ADDRESS:
+            ipmitool_command = "ipmitool -t {owner:#04x} -I {intf} -U {user} -P " \
+                            "{password} -H {host} raw 0x04 0x2d {sn}".\
+                format(owner=owner_id, user=self._user, intf=self._intf,
+                       password=self._password,
+                       host=self._host, sn=sensor_number)
+
+
+        else:
+            ipmitool_command = "ipmitool -I {intf} -U {user} -P " \
+                            "{password} -H {host} raw 0x04 0x2d {sn}".\
+                format(user=self._user, intf=self._intf,
+                       password=self._password,
+                       host=self._host, sn=sensor_number)
 
         command_exit_status, command_output = self.run_command(ipmitool_command,
                                                                stdout=subprocess.PIPE,
@@ -583,7 +593,8 @@ class SDR(Base):
         sensor_current_value = 0
         event_status_data = 0
         if self.__action == "auto":
-            raw_output = self.__get_sensor_current_value(sensor_number)
+            raw_output = self.__get_sensor_current_value(sensor_number,
+                                                         sensor_owner_id)
             if raw_output is not None:
                 raw_output_list = raw_output.strip().split()
                 sensor_current_value = int(raw_output_list[0], 16)
