@@ -21,9 +21,11 @@ iface ens192 inet dhcp
 auto ens224
 iface ens224 inet static
 address 0.0.0.0
+post-up ifconfig ens224 promisc
 
 auto ens256
 iface ens256 inet static
 address 0.0.0.0
+post-up ifconfig ens256 promisc
 
 EOF

@@ -17,7 +17,6 @@
                 "scripts/infrasim-box/virtualbox.sh",
                 "scripts/infrasim-box/dhcp_setting.sh",
                 "scripts/infrasim-box/create_bridges.sh",
-                "scripts/infrasim-box/boot_setting.sh",
                 "scripts/infrasim-compute.sh",
                 "scripts/infrasim-box/config_change.sh",
                 "scripts/cleanup.sh"

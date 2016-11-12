@@ -21,9 +21,11 @@ iface enp0s8 inet dhcp
 auto enp0s9
 iface enp0s9 inet static
 address 0.0.0.0
+post-up ifconfig enp0s9 promisc
 
 auto enp0s10
 iface enp0s10 inet static
 address 0.0.0.0
+post-up ifconfig enp0s10 promisc
 
 EOF
