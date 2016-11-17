@@ -4,13 +4,16 @@
 #Node type of your infrasim compute, this will determine the
 #bmc emulation data and bios binary to use.
 #Supported compute node names:
-#	quanta_d51
-#	quanta_t41
-#	dell_c6320
-#	dell_r630
-#	s2600kp
-#	s2600tp
-#	s2600wtt
+# quanta_d51
+# quanta_t41
+# dell_c6320
+# dell_r630
+# dell_r730
+# dell_r73xd
+# s2600kp - Rinjin KP
+# s2600tp - Rinjin TP
+# s2600wtt - Hydra, Python
+#
 type: quanta_d51
 
 compute:
