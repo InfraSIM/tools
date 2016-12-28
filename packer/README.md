@@ -28,7 +28,10 @@ The output file is named infrasim-compute.ova.
 The OVA file can be deployed in ESXi host.
 
 ### For virtualbox:
-1. make sure the Vagrantfile and box file are in the same folder.
-2. vagrant box add --name infrasim-compute infrasim-compute.box (use --force option if you already added a previous version before).
-3. vagrant up
-4. vagrant ssh
+
+1. Vagrantfile_infrasim is the configuration to setup an infraSIM virtual machine. Vagrantfile_rackhd_infrasim is used to configure a RackHD and an InfraSIM in virtualbox.
+   Remember to rename the configuration file to "Vagrantfile" before using it.
+2. make sure the Vagrantfile and box file are in the same folder.
+3. vagrant box add --name infrasim-compute infrasim-compute.box (use --force option if you already added a previous version before).
+4. vagrant up
+5. vagrant ssh
