@@ -18,4 +18,4 @@ sleep 1
 
 # init infrasim service
 infrasim init
-wget https://raw.githubusercontent.com/InfraSIM/tools/master/packer/scripts/infrasim.yml -O /home/infrasim/.infrasim/.node_map/default.yml -q
+wget https://raw.githubusercontent.com/InfraSIM/tools/master/packer/scripts/infrasim.yml -O ${HOME}/.infrasim/.node_map/default.yml -q
