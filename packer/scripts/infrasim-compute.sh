@@ -11,6 +11,7 @@ sleep 1
 
 # install infrasim-compute
 git clone https://github.com/InfraSIM/infrasim-compute.git
+chown -R infrasim:infrasim infrasim-compute
 cd infrasim-compute
 pip install -r requirements.txt
 python setup.py install
