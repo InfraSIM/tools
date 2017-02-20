@@ -897,6 +897,11 @@ class SDR(Base):
 
 
 def main():
+    py_version = sys.version_info
+    if not (py_version[0] is 2 and py_version[1] is 7):
+        print "Warning: please install Python 2.7 first."
+    return
+
     dump = False
     analysis = False
     auto = False
