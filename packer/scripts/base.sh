@@ -38,3 +38,9 @@ update-grub
 # Here we set the waiting time to 10s to reduce boot time
 sed -i "s/TimeoutStartSec.*/TimeoutStartSec=30s/g" /lib/systemd/system/networking.service
 sed -i "s/^timeout .*/timeout 5;/g" /etc/dhcp/dhclient.conf
+
+# add infrasim to have no password asked for sudo privilege
+touch /etc/sudoers.d/infrasim
+chmod 666 /etc/sudoers.d/infrasim
+echo "infrasim ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/infrasim
+chmod 644 /etc/sudoers.d/infrasim
