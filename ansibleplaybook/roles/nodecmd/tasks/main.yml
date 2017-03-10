@@ -1,0 +1,81 @@
+---
+
+# This task starts a vnode with specified name
+- name: Start vnode
+  shell: infrasim node start {{ node_name }}
+  become: true
+  register: out
+  tags: nodestart
+- debug: var={{item}}
+  with_items: out.stdout_lines
+  tags: nodestart
+
+# This task stops a vnode with specified name
+- name: Stop vnode
+  shell: infrasim node stop {{ node_name }}
+  become: true
+  register: out
+  tags: nodestop
+- debug: var={{item}}
+  with_items: out.stdout_lines
+  tags: nodestop
+
+# This task restarts a vnode with specified name
+- name: Restart vnode
+  shell: infrasim node restart {{ node_name }}
+  become: true
+  register: out
+  tags: noderestart
+- debug: var={{item}}
+  with_items: out.stdout_lines
+  tags: noderestart
+
+# This task destroys a vnode with specified name
+- name: Destroy vnode 
+  shell: infrasim node destroy {{ node_name }}
+  become: true
+  register: out
+  tags: nodedestroy
+- debug: var={{item}}
+  with_items: out.stdout_lines
+  tags: nodedestroy
+
+# This task checks vnode's status with specified name
+- name: View vnode status
+  shell: infrasim node status {{ node_name }}
+  become: true
+  register: out
+  tags: nodestatus
+- debug: var={{item}}
+  with_items: out.stdout_lines
+  tags: nodestatus
+
+# This task list a vnode's information with specified name
+- name: View vnode information
+  shell: infrasim node info {{ node_name }}
+  become: true
+  register: out
+  tags: nodeinfo
+- debug: var={{item}}
+  with_items: out.stdout_lines
+  tags: nodeinfo
+
+# This task starts a vnode's ipmi-console service
+- name: Start ipmi-console
+  shell: ipmi-console start {{ node_name }}
+  become: true
+  register: out
+  tags: startconsole
+- debug: var={{item}}
+  with_items: out
+  tags: startconsole
+
+# This task stops a vnode's ipmi-console service
+- name: Stop ipmi-console
+  shell: ipmi-console stop {{ node_name }}
+  become: true
+  register: out
+  tags: stopconsole
+- debug: var={{item}}
+  with_items: out
+  tags: stopconsole

@@ -1,0 +1,48 @@
+#  Example inventory file identifying hosts running virtual server service
+#  Grouping identifier is type of server that the infrasim-compute application
+#  is simulating
+#
+#   - Comments begin with the '#' character
+#   - Blank lines are ignored
+#   - Groups of hosts are delimited by [header] elements
+#   - You can enter hostnames or ip addresses
+#   - A hostname/ip can be a member of multiple groups
+
+[quanta_d51]
+
+[quanta_t41]
+
+[dell_c6320]
+
+[dell_r630]
+
+[dell_r730]
+
+[dell_r730xd]
+
+[s2600kp]
+
+[s2600tp]
+
+[s2600wtt]
+
+[computes:children]
+quanta_d51
+quanta_t41
+dell_c6320
+dell_r630
+dell_r730
+dell_r730xd
+s2600kp
+s2600tp
+s2600wtt
+
+[computes:vars]
+ansible_connection=ssh
+ansible_user=infrasim
+ansible_port=22
+ansible_ssh_pass=infrasim
+
+ansible_become=true
+ansible_become_pass=infrasim
+ansible_become_flags= -S -n
