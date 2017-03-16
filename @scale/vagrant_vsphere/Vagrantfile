@@ -1,0 +1,44 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+t = Time.now
+p t
+$script = <<SCRIPT
+sudo ifconfig ens160 | awk '/inet addr/{print substr($2,6)}' > ip.txt
+sudo cat ip.txt
+date
+SCRIPT
+
+BOX_IMAGE = 'InfraSIM/infrasim-compute' # The vagrant-vsphere box is uploaded to InfraSIM Atlas website: https://atlas.hashicorp.com/InfraSIM/boxes/infrasim-compute
+NODE_COUNT = 3  # node number to be deployed
+Vagrant.configure("2") do |config|
+  (1..NODE_COUNT).each do |i|
+    config.vm.define "vagrant-#{i}" do |subconfig|
+      subconfig.vm.box = BOX_IMAGE
+      subconfig.vm.hostname = "vagrant-#{i}"
+      subconfig.vm.network "private_network", ip: "192.168.100.#{i+10}", auto_config: false   #private network IP will be used for vagrant ssh, etc.
+      #config.ssh
+      subconfig.ssh.username = 'infrasim'  #the user name which used to log into template VM.
+      subconfig.ssh.password = 'infrasim'  #the password which used to log int template VM.
+      subconfig.ssh.insert_key = true  #Vagrant will automatically insert a keypait to use for SSH.
+      subconfig.vm.synced_folder ".", "/vagrant", disabled: true   #Optional, sync between vagrant host and VM.
+      subconfig.vm.provision "shell", inline: $script, privileged: false   # provision shell command (defined in SCRIPT) after VM power on.
+      subconfig.vm.boot_timeout = 300   # default wait time for VM boot is 300s.
+    end
+
+    # Vagrant provider - vSphere settings, required unless noted:
+    config.vm.provider :vsphere do |vsphere|
+      vsphere.host = 'vsphere.local'  #IP or name of the vCenter API.
+      vsphere.data_center_name = 'Data-center-Rack' #Optional, data center containing the computed resource.
+      vsphere.compute_resource_name = 'infrasim-vagrant' #the ESXi IP or cluster containing the resource pool.
+      vsphere.resource_pool_name = 'infrasim-vagrant'  #resource pool created or existed
+      vsphere.template_name = 'vagrant-template/infrasim-vagrant-template' #VM or VM template to clone.
+      vsphere.vm_base_path = 'vagrant-machines'  #Optional, path to folder where new VM be created.
+      vsphere.user = 'vagrant-user@vsphere' #user name for connecting to vSphere
+      vsphere.password = '***************'  #password for connecting to vSphere
+      vsphere.insecure = true  #Optional, verify SSL certificated from host
+      vsphere.ip_address_timeout = 300  #default is 300s.
+      vsphere.customization_spec_name = 'infrasim-vagrant' #Optional, customization spec for new VM, the spec will be used while configure static IP for private network.
+    end
+  end
+end
+
