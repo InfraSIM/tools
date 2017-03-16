@@ -12,6 +12,7 @@ https://github.com/InfraSIM/infrasim-compute/wiki/Vagrant-and-Libvirt-plugin-for
 **vagrant-libvirt version: 0.0.37**
 
 Command example:
+
     vagrant up --provider = libvirt
     vagrant ssh vagrant-1
     vagrant destroy
