@@ -16,7 +16,7 @@ bridge_hello 1
 bridge_stp off
 
 
-source /etc/network/interfaces.d/*.cfg
+source /etc/network/interfaces.d/*
 
 EOF
 
