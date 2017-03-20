@@ -33,12 +33,9 @@ Here we select a VM with Ubuntu 16.04 installed as Vagrant host server.
 
 3.  Need to make sure your have all the build dependencies (in Ubuntu) installed for vagrant-libvirt. 
 
-  **Uncomment all "deb-src" sources in "/etc/apt/sources.list"**
-     
+	**Uncomment all "deb-src" sources in "/etc/apt/sources.list"**
 	$ sudo apt-get update
-
 	$ apt-get build-dep vagrant ruby-libvirt
-
 	$ sudo apt-get install qemu-kvm libvirt-bin libvirt-dev
 
 	$ sudo apt-get install qemu libvirt-bin ebtables dnsmasq
@@ -89,7 +86,7 @@ Here we select a VM with Ubuntu 16.04 installed as Vagrant host server.
 
 	$ virsh list
 
-	![virsh vm list](https://github.com/chenge3/pics_for_wiki/blob/master/virsh_vm_list.png)
+![virsh vm list](https://github.com/chenge3/pics_for_wiki/blob/master/virsh_vm_list.png)
 
 
 ## We can ssh to target VM
