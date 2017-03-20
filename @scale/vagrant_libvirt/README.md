@@ -28,7 +28,9 @@ Here we select a VM with Ubuntu 16.04 installed as Vagrant host server.
     
     '''
     $ wget https://releases.hashicorp.com/vagrant/1.9.2/vagrant_1.9.2_x86_64.deb 
+
     $ sudo dpkg -i vagrant_1.9.2_x86_64.deb
+
     $ vagrant --version  **"to make sure Vagrant version as your expectation"**
     '''
 
@@ -38,10 +40,15 @@ Here we select a VM with Ubuntu 16.04 installed as Vagrant host server.
      
     '''  
     $ sudo apt-get update
+
     $ apt-get build-dep vagrant ruby-libvirt
+
     $ sudo apt-get install qemu-kvm libvirt-bin libvirt-dev
+
     $ sudo apt-get install qemu libvirt-bin ebtables dnsmasq
+
     $ sudo apt-get install libxslt-dev libxml2-dev libvirt-dev zlib1g-dev ruby-dev
+
     $ sudo adduser $USER libvirtd
     '''
 
@@ -62,11 +69,17 @@ Here we select a VM with Ubuntu 16.04 installed as Vagrant host server.
     
     '''
     $ git clone https://github.com/chef/bento
+
     $ cd bento
+
     $ packer build -only qemu -var "headless=true" ubuntu-14.04.amd64.json
+
     $ vagrant box add builds/ubuntu-14.04.libvirt.box --name "InfraSIM"
+
     $ vagrant box list
+
      InfraSIM             (libvirt, 0)
+
      InfraSIM-Ubuntu-1604 (libvirt, 0)
     '''
 
