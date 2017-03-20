@@ -83,6 +83,4 @@ If add "--debug" parameter we can save output to a file "vagrant.log".
 2. https://github.com/mitchellh/vagrant
 3. https://github.com/nsidc/vagrant-vsphere
 4. https://pubs.vmware.com/vsphere-50/index.jsp?topic=%2Fcom.vmware.wssdk.pg.doc_50%2FPG_Ch13_Resources.15.6.html
-
-**Create a Customization Specification for Linux in vSphere Client.**
 5. https://pubs.vmware.com/vsphere-51/index.jsp#com.vmware.vsphere.vm_admin.doc/GUID-70CD44B1-B27D-43E7-83D5-A76833B1CA8A.html
