@@ -10,6 +10,7 @@ We can execute vagrant up, halt, reload, provision, destroy and ssh...command on
 Here we select a VM with Ubuntu 16.04 installed as Vagrant host server.
 
 * Vagrant host Environment Preparation: 
+
 1. Install Vagrant dependency
 
 	$ sudo apt-get install ruby-full
@@ -39,8 +40,8 @@ Which is hosted via Atlas in "InfraSIM/infrasim-compute" organization, we can de
 https://atlas.hashicorp.com/InfraSIM/boxes/infrasim-compute
 
 ### Prepare for the **Vagrantfile** 
-Please prepare this file base on your exact test vCenter environment, an example is uploaded to GitHub InfraSIM/tools/@scale repo for reference.
-   https://github.com/InfraSIM/tools
+Prepare for "Vagrantfile" base on your exact test vCenter environment, an example "Vagrantfile" is uploaded to GitHub InfraSIM/tools/@scale/vagrant_vsphere/ repo for reference.
+https://github.com/InfraSIM/tools
 
 ### Create a template/vm in vSphere/vCenter for vagrant proceed. 
 
@@ -53,7 +54,7 @@ Make sure the "template inventory location" and "template name" is the same as i
 
 ### Create Customization Specifications through vSphere Center
 
-This "spec" will be used one you need to set static IP for "private network".
+This "spec" will be used when you need to set static IP for VM's "private network".
 One key point, the NIC numbers in "spec" should match the NIC numbers in vm template.
 
 ![Create Customization Specification ](https://github.com/chenge3/pics_for_wiki/blob/master/Create_Customization_Specifications.jpeg)

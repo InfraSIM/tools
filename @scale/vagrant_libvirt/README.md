@@ -7,7 +7,7 @@
 
 # Setup and Execution
 
-## Vagrant and libvirt plugin setup
+## Vagrant and libvirt setup
 Here we select a VM with Ubuntu 16.04 installed as Vagrant host server.
 * Vagrant host Environment Preparation: 
    
@@ -37,9 +37,7 @@ Here we select a VM with Ubuntu 16.04 installed as Vagrant host server.
 
 	$ sudo apt-get update
 
-	$ apt-get build-dep vagrant ruby-libvirt
-
-	$ sudo apt-get install qemu-kvm libvirt-bin libvirt-dev
+	$ sudo apt-get build-dep vagrant ruby-libvirt
 
 	$ sudo apt-get install qemu libvirt-bin ebtables dnsmasq
 
@@ -47,8 +45,18 @@ Here we select a VM with Ubuntu 16.04 installed as Vagrant host server.
 
 	$ sudo adduser $USER libvirtd
 
+4.  Check the qemu version is not "infrasim-qemu".
+	
+	$ qemu-system-x86_64 --version
 
-4.  Need to install vagrant-libvirt use standard vagrant plugin installation method.
+	- If the version is "QEMU emulator version infrasim-qemu_2.6.2-1.0.19ubuntu16.04, Copyright (c) 2003-2008 Fabrice Bellard",
+	  run command first: **$ sudo dpkg -r infrasim-qemu**
+
+	- If the version is "QEMU emulator version 2.5.0 (Debian 1:2.5+dfsg-5ubuntu10.9), Copyright (c) 2003-2008 Fabrice Bellard", 
+	  go to install vagrant-libvirt plugin.
+		
+
+5.  Need to install vagrant-libvirt use standard vagrant plugin installation method.
     
 	$ vagrant plugin install vagrant-libvirt
 
@@ -64,21 +72,19 @@ Here we select a VM with Ubuntu 16.04 installed as Vagrant host server.
 
 	$ cd bento
 
-	$ packer build -only qemu -var "headless=true" ubuntu-14.04.amd64.json
+	$ sudo packer build -only qemu -var "headless=true" ubuntu-14.04-amd64.json
 
-	$ vagrant box add builds/ubuntu-14.04.libvirt.box --name "InfraSIM"
+	$ vagrant box add builds/ubuntu-14.04.libvirt.box --name "ubuntu1404"
 
 	$ vagrant box list
 
-	InfraSIM             (libvirt, 0)
-
-	InfraSIM-Ubuntu-1604 (libvirt, 0)
+	 ubuntu1404       (libvirt, 0)
 
   **While building your box using packer, ubuntu-14.04-amd64-libvirt-box is recommended.**
    
 ## Prepare Vagrantfile
 
-   Please prepare this file base on provider info, an example is uploaded to GitHub InfraSIM/tools/@scale/vagrant_libvirt repo for reference.
+   Prepare Vagrantfile for vagrant up, an example **"Vagrantfile"** is uploaded to GitHub InfraSIM/tools/@scale/vagrant_libvirt repo for reference.
    https://github.com/InfraSIM/tools
 
 ## Run the vagrant command in Vagrant host server to build VMs in Ubuntu.
@@ -107,6 +113,27 @@ https://github.com/InfraSIM/tools/pull/40
 If add "--debug" parameter we can save output to a file "vagrant.log". 
 
 	$ vagrant up --debug &> vagrant.log
+
+### Check the vagrant-libvirt network status, this is used as vagrant management network to manage vm.
+		
+	$ virsh net-info vagrant-libvirt
+	
+	Name:           vagrant-libvirt
+	UUID:           bce64e82-d217-45b2-ac7f-18a36e2dd516
+	Active:         yes
+	Persistent:     yes
+	Autostart:      no
+	Bridge:         virbr1
+
+	$ ifconfig virbr1
+
+	virbr1    Link encap:Ethernet  HWaddr 52:54:00:e7:b1:14  
+          	  inet addr:192.168.121.1  Bcast:192.168.121.255  Mask:255.255.255.0
+         	  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+         	  RX packets:1118 errors:0 dropped:0 overruns:0 frame:0
+	          TX packets:1024 errors:0 dropped:0 overruns:0 carrier:0
+        	  collisions:0 txqueuelen:1000 
+         	  RX bytes:156150 (156.1 KB)  TX bytes:180150 (180.1 KB)
 
 # Reference
 1. https://www.vagrantup.com/docs/

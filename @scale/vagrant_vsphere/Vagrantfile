@@ -28,11 +28,11 @@ Vagrant.configure("2") do |config|
     # Vagrant provider - vSphere settings, required unless noted:
     config.vm.provider :vsphere do |vsphere|
       vsphere.host = 'vsphere.local'  #IP or name of the vCenter API.
-      vsphere.data_center_name = 'Data-center-Rack' #Optional, data center containing the computed resource.
-      vsphere.compute_resource_name = 'infrasim-vagrant' #the ESXi IP or cluster containing the resource pool.
-      vsphere.resource_pool_name = 'infrasim-vagrant'  #resource pool created or existed
+      vsphere.data_center_name = 'Data-center-Rack' #Specify it when there are multiple datacenters in vCenter.
+      vsphere.compute_resource_name = 'infrasim-vagrant' #the ESXi IP or a cluster containing the resource pool.
+      vsphere.resource_pool_name = 'infrasim-vagrant'  #Create a resource pool or using an existed.
       vsphere.template_name = 'vagrant-template/infrasim-vagrant-template' #VM or VM template to clone.
-      vsphere.vm_base_path = 'vagrant-machines'  #Optional, path to folder where new VM be created.
+      vsphere.vm_base_path = 'vagrant-machines'  #General, it is an "inventory" folder where new VMs be created.
       vsphere.user = 'vagrant-user@vsphere' #user name for connecting to vSphere
       vsphere.password = '***************'  #password for connecting to vSphere
       vsphere.insecure = true  #Optional, verify SSL certificated from host
