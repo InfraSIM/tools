@@ -1,0 +1,31 @@
+---
+
+# This task prints infrasim version
+- name: Show infrasim version
+  shell: infrasim version
+  register: out
+  tags: version
+- debug: var={{ item }}
+  with_items: out.stdout_lines 
+  tags: version
+
+# This task inits infrasim in remote hosts
+- name: Init infrasim service
+  shell: infrasim init 
+  become: true
+  register: out
+  tags: init 
+- debug: var={{ item }}
+  with_items: out.stdout_lines 
+  tags: init
+
+# This task shows infrasim command line help
+- name: Show infrasim CLI help
+  shell: infrasim -h
+  become: true
+  register: out
+  tags: help
+- debug: var={{ item }}
+  with_items: out.stdout_lines 
+  tags: help
+

@@ -1,0 +1,10 @@
+---
+
+# This task uninstalls infrasim-compute
+- name: Uninstall infrasim
+  become: true
+  shell: echo "y" | pip uninstall infrasim-compute
+  register: out
+- debug: var={{ item }}
+  with_items: out.stdout_lines
+

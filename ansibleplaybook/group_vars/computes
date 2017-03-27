@@ -1,0 +1,13 @@
+---
+# In this file, the default values for variables are defined.
+# They will be overwritten by command line extra variables
+
+# git repo of infrasim
+source_repo: https://github.com/InfraSIM/infrasim-compute.git
+
+
+# default node name
+node_name: default
+
+# default node type
+node_type: quanta_d51

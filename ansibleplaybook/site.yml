@@ -1,0 +1,22 @@
+---
+- name: Install InfraSIM
+  hosts: computes
+  tags: install
+
+  roles:
+  - installation
+
+- name: Uninstall InfraSIM
+  hosts: computes
+  tags: uninstall
+
+  roles:
+  - uninstallation
+
+- name: Manipulate InfraSIM
+  hosts: computes
+
+  roles:
+  - commoncmd
+  - configcmd
+  - nodecmd

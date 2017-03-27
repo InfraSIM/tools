@@ -1,0 +1,48 @@
+---
+
+# This task installs apt dependencies for infrasim
+- name: Apt install packages
+  become: true
+  apt: name={{ item }} state=latest
+  with_items:
+      - python-pip
+      - libpython-dev
+      - libssl-dev
+  register: out
+- debug: var={{ item }}
+  with_items: out
+
+# This task installs setuptools and upgrade pip version for infrasim
+- name: PIP install packages
+  become: true
+  pip: name={{ item }} state=latest
+  with_items:
+      - pip
+      - setuptools
+  register: out
+- debug: var={{ item }}
+  with_items: out
+
+# This task downloads infrasim-compute.git from repo
+- name: Download infrasim-compute source code
+  git: repo={{ source_repo }} dest={{ lookup('env', 'HOME') }}/infrasim-compute update=no
+  become: false
+  register: out
+- debug: var={{ item }}
+  with_items: out
+
+# This task installs pip dependencies for infrasim
+- name: Install Requirements
+  pip: chdir={{ lookup('env', 'HOME') }}/infrasim-compute requirements=requirements.txt
+  become: false
+  register: out
+- debug: var={{ item }}
+  with_items: out.stdout_lines
+
+# This task installs infrasim
+- name: Install InfraSIM from source
+  shell: python setup.py install chdir={{ lookup('env', 'HOME') }}/infrasim-compute
+  become: true
+  register: out
+- debug: var={{ item }}
+  with_items: out.stdout_lines
