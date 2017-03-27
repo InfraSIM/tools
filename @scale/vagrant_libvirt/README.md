@@ -66,7 +66,18 @@ Here we select a VM with Ubuntu 16.04 installed as Vagrant host server.
 
 ## Use "Packer" and Packer templates to build vagrant box.
 
-   Packer build templates found in [ chef/bento github repo.](https://github.com/chef/bento).
+  1. Install Packer
+	
+	$ wget https://releases.hashicorp.com/packer/0.12.3/packer_0.12.3_linux_amd64.zip
+	
+	$ mkdir ~/packer
+	
+ 	$ unzip packer_0.12.3_linux_amd64.zip -d ~/packer
+	
+        $ export PATH=$PATH:/home/infrasim/packer
+
+	
+  2. Packer build templates found in [ chef/bento github repo.](https://github.com/chef/bento).
     
 	$ git clone https://github.com/chef/bento
 
@@ -142,3 +153,4 @@ If add "--debug" parameter we can save output to a file "vagrant.log".
 4. https://linuxsimba.com/vagrant-libvirt-install
 5. https://github.com/chef/bento
 6. https://www.packer.io/docs/
+

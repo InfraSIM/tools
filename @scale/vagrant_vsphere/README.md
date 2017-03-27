@@ -8,6 +8,8 @@ We can execute vagrant up, halt, reload, provision, destroy and ssh...command on
 ## Setup and Execution
 ### Vagrant and vSphere plugin setup
 Here we select a VM with Ubuntu 16.04 installed as Vagrant host server.
+Vagrant host server should have access network to vSphere/vCenter.
+![Vagrant vSphere environment](https://github.com/chenge3/pics_for_wiki/blob/master/vagrant-vsphere-env-diagram.png)
 
 * Vagrant host Environment Preparation: 
 
