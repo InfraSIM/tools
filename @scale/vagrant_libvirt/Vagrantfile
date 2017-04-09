@@ -1,0 +1,24 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+t = Time.now
+p t
+$script = <<SCRIPT
+sudo ifconfig eth0 | awk '/inet addr/{print substr($2,6)}' > ip.txt
+sudo cat ip.txt
+date
+SCRIPT
+
+BOX_IMAGE = 'ubuntu1404' # This vagrant box can be build by Packer
+NODE_COUNT = 3 # Node number to be deployed.
+Vagrant.configure("2") do |config|
+  (1..NODE_COUNT).each do |i|
+    config.vm.define "vagrant-#{i}" do |subconfig|
+      subconfig.vm.box = BOX_IMAGE
+      subconfig.vm.hostname = "vagrant-#{i}"
+      subconfig.vm.network "public_network", dev: "ens160", network_name: "virbr1"
+      subconfig.vm.synced_folder ".", "/vagrant", disabled: true
+      subconfig.vm.provision "shell", inline: $script, privileged: false
+      subconfig.vm.boot_timeout = 300 
+    end
+  end
+end
