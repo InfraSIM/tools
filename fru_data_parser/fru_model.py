@@ -245,6 +245,7 @@ class Fru_Data_Cmd():
 
     def set_board_fru_file_id(self, fru_file_id):
         self.obj_board_info_area.set_board_fru_file_id(fru_file_id)
+        self.compose()
 
     def get_board_extra(self):
 
@@ -909,6 +910,8 @@ class Board_Info_Area(Area):
         checksum = (~sum([int(i, 16) for i in list_data]) + 1) % 256
 
         list_data += ["0x{}".format(hex(checksum)[2:].zfill(2))]
+
+        self.data = list_data
 
 
 class Product_Info_Area(Area):
