@@ -9,9 +9,10 @@
   with_items: out.stdout_lines
   tags: configlist
 
+
 # Task to change node type for specified node
 - lineinfile:
-    dest: "{{ lookup('env', 'HOME') }}/.infrasim/.node_map/{{ node_name }}.yml"
+    dest: "{{ ansible_env.HOME }}/.infrasim/.node_map/{{ node_name }}.yml"
     regexp: '^(type:(\s)).*'
     line: '\1{{ node_type }}'
     backrefs: true
@@ -38,7 +39,7 @@
 # Tasks to transfer yml file to hosts and add to config
 - copy: 
     src: "{{ yml_path }}"
-    dest: "{{ lookup('env','HOME') }}/tmp.yml"
+    dest: "{{ ansible_env.HOME }}/tmp.yml"
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
     mode: 0644
@@ -49,7 +50,7 @@
   with_items: out
   tags: addconfig
 - name: Add node config 
-  shell: infrasim config add {{ node_name }} {{ lookup('env', 'HOME') }}/tmp.yml
+  shell: infrasim config add {{ node_name }} {{ ansible_env.HOME }}/tmp.yml
   become: true
   tags: addconfig
   register: out
@@ -60,7 +61,7 @@
 # Tasks to transfer yml file to hosts and update node config
 - copy: 
     src: "{{ yml_path }}"
-    dest: "{{ lookup('env','HOME') }}/tmp.yml"
+    dest: "{{ ansible_env.HOME }}/tmp.yml"
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
     mode: 0644
@@ -72,7 +73,7 @@
   tags: updateconfig
 
 - name: Update node config
-  shell: infrasim config update {{ node_name }} {{ lookup('env', 'HOME') }}/tmp.yml
+  shell: infrasim config update {{ node_name }} {{ ansible_env.HOME }}/tmp.yml
   become: true
   register: out
   tags: updateconfig
