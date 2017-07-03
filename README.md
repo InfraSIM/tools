@@ -11,5 +11,5 @@ docker                 | Contents to enable infrasim-compute to run in a docker 
 fru_data_parser        | Lib to read and write emu file, aka, ipmi\_sim\_cmd set. Enables to operate FRU data command in human readable means.
 monorailtest           | Refer to the README.md in monorailtest folder.
 packer                 | Templates and related scripts that used for packer to build images.
-smbiostool             | Script to capture smbios data.
+smbiostool             | Script to change attributes in smbios file.
 @scale                 | Example Vagrantfile which can be used for @scale deployment with vSphere provider and Libvirt provider.
