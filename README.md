@@ -2,14 +2,14 @@ The scripts in different folders are used to quickly build or manage the virtual
 
 Folders                | Description
 --------               | ---
-docker_builder         | Scripts to quickly build an compute node image on docker platform.
-kvm_builder            | Script to quickly build an compute node image on KVM platform.
-monorailtest           | Refer to the README.md in monorailtest folder.
-ova_builder            | Script to quickly build an OVA image.
-smbiostool             | Script to capture smbios data.
-virtualbox_builder     | Script to quickly build an compute node image on virtual box platform.
-vmworkstation_builder  | Script to quickly build an compute node image on vmworkstation platform.
-vmx                    | Script to build an compute node image with vmx type. 
+ansibleplaybook        | Playbook of ansible tasks for infrasim installation and basic commands.
 data_generater         | Script to generate the fru and sensor data for the new node simulation.
-fru_data_parser        | Lib to read and write emu file, aka, ipmi\_sim\_cmd set. Can operate FRU data command in a human readable means now.
-deb_builder            | Script to build deb package. 
+deb_builder            | Scripts to build openipmi and qemu deb packages.
+diag_arp_flux          | Utility to fix ARP flux.
+dmidecode-2.12         | Utility to collect smbios data.
+docker                 | Contents to enable infrasim-compute to run in a docker container.
+fru_data_parser        | Lib to read and write emu file, aka, ipmi\_sim\_cmd set. Enables to operate FRU data command in human readable means.
+monorailtest           | Refer to the README.md in monorailtest folder.
+packer                 | Templates and related scripts that used for packer to build images.
+smbiostool             | Script to change attributes in smbios file.
+@scale                 | Example Vagrantfile which can be used for @scale deployment with vSphere provider and Libvirt provider.

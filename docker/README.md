@@ -5,9 +5,11 @@ Which can make infrasim-compute run in a docker container.
 Dockerfile is a text document that contains all the dependencies/commands a user
 could call on the command line to assemble an infrasim-compute image. Using *docker build*
 users can create an automated build that executes several command-line instructions.
-Command example:
-
-    docker build -t infrasim-compute .
+Steps:
+	1. Copy the Dockerfile from the tools/docker directory into the infrasim-compute directory.
+	2. Run docker build command from infrasim-compute directory. 
+	   Command example:  
+		docker build -t infrasim-compute .
 ## docker.sh
 The bash script includes below functions:
  * docker.sh can help you setup the docker running environment;
