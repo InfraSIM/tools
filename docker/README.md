@@ -22,7 +22,7 @@ which is set up in docker.sh.
  
 Network connection as picture below:
 
-![container_network](https://github.com/chenge3/pics_for_wiki/blob/master/Infrasim-compute_container_network.jpg)
+![container_network](https://github.com/InfraSIM/tools/blob/master/docker/Infrasim-compute_container_network.jpg)
 
 Command example:
 
