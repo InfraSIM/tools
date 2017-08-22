@@ -12,6 +12,8 @@ ADD . /infrasim-compute
 RUN apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential libssl-dev libffi-dev python-dev libaio-dev bridge-utils git apt-utils
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y net-tools libnuma-dev libglib2.0-dev libapt-pkg5.0 iputils-ping isc-dhcp-client
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-server
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y vim curl
 
 # Upgrade pip and install setuptools
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y python-pip
@@ -21,8 +23,17 @@ RUN pip install setuptools
 # Install any needed packages specified in requirements.txt
 RUN pip install -r requirements.txt
 
+# config SSH service
+RUN mkdir /var/run/sshd
+RUN echo 'root:root' | chpasswd
+RUN sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+# SSH login fix. Otherwise user is kicked off after login
+RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
+
+
 # Make port 80 available to the world outside this container
 EXPOSE 80
+EXPOSE 22
 
 # Define environment variable
 ENV DEBIAN_FRONTEND noninteractive
@@ -32,4 +43,7 @@ RUN ["python", "setup.py", "install"]
 
 # RUN which infrasim
 RUN ["infrasim", "init"]
+
+
+ENTRYPOINT service ssh restart && bash
 
