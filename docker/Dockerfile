@@ -13,6 +13,7 @@ RUN apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential libssl-dev libffi-dev python-dev libaio-dev bridge-utils git apt-utils
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y net-tools libnuma-dev libglib2.0-dev libapt-pkg5.0 iputils-ping isc-dhcp-client
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-server
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y vim curl
 
 # Upgrade pip and install setuptools
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y python-pip
