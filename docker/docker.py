@@ -203,7 +203,7 @@ class Host():
     it stop the containers and restore network as well.
     """
     def __init__(self, eth_name, append=False,
-                 image="infrasim-compute-ssh", tag="latest"):
+                 image="infrasim/infrasim-compute", tag="latest"):
         self.__eth = eth_name
         self.__docker_image = image
         self.__docker_image_tag = tag
@@ -432,6 +432,8 @@ class Host():
 
 
 class Args():
+    node = None
+
     def __init__(self):
         self._parser = None
         self.build_parser()
@@ -440,13 +442,14 @@ class Args():
     def file_number_pair(arg):
         val = arg.split(',')
         if len(val) != 2:
-            raise argparse.ArgumentError("Node format error")
+            raise argparse.ArgumentError(Args.node, "Node format error")
 
         if os.path.exists(val[0]) is False:
-            raise ArgumentError("File not found:"+val[0])
+            raise argparse.ArgumentError(Args.node, "Can't find " + val[0])
 
         if int(val[1]) <= 0:
-            raise ArgumentError("Node number error:" + arg)
+            raise argparse.ArgumentError(Args.node, "Count must greater "
+                                         "than 0")
         ret = {}
         ret["yml"] = val[0]
         ret["number"] = int(val[1])
@@ -471,9 +474,11 @@ class Args():
                                required=True,
                                help='network interface for bridge connection')
 
-        start_cmd.add_argument('-n', '--nodes', nargs='+', required=True,
-                               type=Args.file_number_pair,
-                               help='node configuration, <yml_file,count>')
+        Args.node = start_cmd.add_argument('-n', '--nodes', nargs='+',
+                                           required=True,
+                                           type=Args.file_number_pair,
+                                           help='node configuration, '
+                                           '<yml_file,count>')
 
         start_cmd.add_argument('-l', '--list', action="store_true",
                                help='generate an IP list of containers after'
@@ -498,10 +503,10 @@ class Args():
 
 def main():
     global op
-
+    op = Operator()
     parser = Args()
     args = parser.parse_args()
-    op = Operator()
+
     if (os.geteuid() != 0):
             raise Exception("Please run as root!!")
     if args.cmd == "start":
