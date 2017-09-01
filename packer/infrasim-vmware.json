@@ -29,7 +29,8 @@
                 "scripts/infrasim-vmware/vmware.sh",
                 "scripts/infrasim-vmware/nested.sh",
                 "scripts/infrasim-compute.sh",
-                "scripts/cleanup.sh"
+                "scripts/cleanup.sh",
+                "scripts/infrasim-as-service.sh"
             ],
             "execute_command": "echo 'infrasim'|sudo -S bash '{{.Path}}'"
         }

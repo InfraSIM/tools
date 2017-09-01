@@ -19,7 +19,8 @@
                 "scripts/infrasim-box/create_bridges.sh",
                 "scripts/infrasim-compute.sh",
                 "scripts/infrasim-box/config_change.sh",
-                "scripts/cleanup.sh"
+                "scripts/cleanup.sh",
+                "scripts/infrasim-as-service.sh"
             ],
             "execute_command": "echo 'vagrant'|sudo -S bash '{{.Path}}'"
         }
