@@ -393,6 +393,8 @@ class Host():
                 # if this is not "veth", it is a Eth If.
                 op.run("ifconfig {0} -promisc".format(eth))
                 op.run("dhclient {0}".format(eth))
+            else:
+                op.run("ifconfig {0} down".format(eth))
         # remove the useless bridge.
         op.run("ovs-vsctl del-br {0}".format(br))
 
