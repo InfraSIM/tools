@@ -15,6 +15,9 @@ Command example:
 
 ## docker.py
 This script is used to manage infrasim-compute docker containers. It has 3 sub commands, start, stop and show.
+
+**Note**: please set infrasim node "network_mode" to "bridge" and "network_name" to "br0"  in infrasim yml configuration.
+
 The command of 'start' starts new infrasim nodes and the usage like,
     usage: docker.py start [-h] [-a] -i ETH -n NODES [NODES ...] [-l]
 
@@ -24,7 +27,7 @@ The command of 'start' starts new infrasim nodes and the usage like,
       -i ETH, --if ETH      network interface for bridge connection
       -n NODES [NODES ...], --nodes NODES [NODES ...]
                             node configuration, <yml_file,count>
-      -l, --list            generate an IP list of containers afterafter creation
+      -l, --list            generate an IP list of containers after creation
                             done. 
 
 This function helps you setup the docker running environment by,
