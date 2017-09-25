@@ -125,9 +125,9 @@ class Container:
         self._docker_image = docker_image
         self._ip = None
 
-    def start(self):
-        ret = op.run("docker run --privileged -dit --name {0} {1}".
-                     format(self._name, self._docker_image))
+    def start(self, index):
+        ret = op.run("docker run -p {}:5901 --privileged -dit --name {} {}".
+                     format(5901+index, self._name, self._docker_image))
         if ret[0] != 0:
             raise Exception("Fail to start container {0}".format(self._name))
 
@@ -354,11 +354,13 @@ class Host():
         self.create_vswitch()
 
     def start_nodes(self, cfg_list):
+        i = 0
         for container in self.get_containers(cfg_list):
-            container.start()
+            container.start(i)
             container.connect_network()
             container.setup_inner_network()
             container.start_node()
+            i = i+1
 
     def show(self):
         if self.__eth:
