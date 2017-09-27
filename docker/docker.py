@@ -130,21 +130,22 @@ class Container:
                      format(5901+index, self._name, self._docker_image))
         if ret[0] != 0:
             raise Exception("Fail to start container {0}".format(self._name))
+        op.run("docker exec {} sudo service ssh start".format(self._name))
 
     def connect_network(self):
-        op.run("/bin/bash pipework {2} -i eth1 -l {1} {0} "
+        op.run("pipework {2} -i eth1 -l {1} {0} "
                "dhclient".format(self._name, self._port_name, self.__bridge))
 
     def setup_inner_network(self):
-        op.run("docker exec {0} brctl addbr br0".format(self._name))
-        op.run("docker exec {0} brctl addif br0 eth1".format(self._name))
+        op.run("docker exec {0} sudo brctl addbr br0".format(self._name))
+        op.run("docker exec {0} sudo brctl addif br0 eth1".format(self._name))
         ip = None
         net_mask = None
         # try 5 times to get available IP address from DHCP.
         retry_counter = 0
         while retry_counter < 5:
             time.sleep(1)
-            ret = op.run("docker exec {0} ifconfig eth1".format(self._name))
+            ret = op.run("docker exec {0} sudo ifconfig eth1".format(self._name))
             m = re.search("inet addr:(\d+\.\d+\.\d+\.\d+).* "
                           "Mask:(\d+\.\d+\.\d+\.\d+)", ret[1])
             if m:
@@ -160,9 +161,9 @@ class Container:
 
         print("IP={0}, MASK={1}".format(ip, net_mask))
         op.log_info("Assign {1} for eth1 on {0}".format(self._name, ip))
-        op.run("docker exec {0} ifconfig eth1 0.0.0.0".format(self._name))
+        op.run("docker exec {0} sudo ifconfig eth1 0.0.0.0".format(self._name))
         # connect br0 with gateway
-        op.run("docker exec {2} ifconfig br0 {0} netmask {1} up".
+        op.run("docker exec {2} sudo ifconfig br0 {0} netmask {1} up".
                format(ip, net_mask, self._name))
         self._ip = ip
 
@@ -180,14 +181,14 @@ class Container:
         # save / import cfg file and start node.
         with open('/tmp/cfg.yml', 'w') as outfile:
             yaml.dump(self._cfg, outfile, default_flow_style=False)
-        op.run("docker cp /tmp/cfg.yml {0}:/root/{1}.yml".
+        op.run("docker cp /tmp/cfg.yml {0}:/home/infrasim/{1}.yml".
                format(self._name, self._node_name))
-        op.run("docker exec {0} infrasim config add {1} /root/{1}.yml".
+        op.run("docker exec {0} sudo infrasim config add default /home/infrasim/{1}.yml".
                format(self._name, self._node_name))
-        op.run("docker exec {0} infrasim config update {1} /root/{1}.yml".
+        op.run("docker exec {0} sudo infrasim config update default /home/infrasim/{1}.yml".
                format(self._name, self._node_name))
-        op.run("docker exec {0} infrasim node start {1}".
-               format(self._name, self._node_name))
+        op.run("docker exec {0} sudo infrasim node start".
+               format(self._name))
 
     def display_ip_address():
         logging.getLogger('').info("{0}:{1}".format(self._name, self._ip))
@@ -380,7 +381,7 @@ class Host():
         # list IP address for the containers who uses the port (index)
         for container in m:
             container = "container_{0}".format(container)
-            ret = op.perform("docker exec {0} ifconfig br0".format(container))
+            ret = op.perform("docker exec {0} sudo ifconfig br0".format(container))
             m2 = re.search("inet addr:(\d+\.\d+\.\d+\.\d+).* "
                            "Mask:(\d+\.\d+\.\d+\.\d+)", ret[1])
             if m2:
