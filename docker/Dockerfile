@@ -43,11 +43,11 @@ EXPOSE 22
 ENV DEBIAN_FRONTEND noninteractive
 
 # Run app.py when the container launches
-RUN ["python", "setup.py", "install"]
+RUN ["sudo", "python", "setup.py", "install"]
 
 # RUN which infrasim
-RUN ["infrasim", "init"]
-
+USER infrasim
+RUN ["sudo", "infrasim", "init"]
 
 ENTRYPOINT service ssh restart && bash
 
