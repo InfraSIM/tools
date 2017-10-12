@@ -336,14 +336,15 @@ class Host():
             if self.__start_index <= int(item):
                 self.__start_index = int(item) + 1
 
+        index = self.__start_index
         image = "{0}:{1}".format(self.__docker_image, self.__docker_image_tag)
         for cfg in cfg_list:
             with open(cfg["yml"]) as f:
                 cfg_map = yaml.safe_load(f)
             for i in range(0, cfg["number"]):
-                containers.append(Container(self.__start_index, image,
+                containers.append(Container(index, image,
                                             self.__bridge, cfg_map))
-                self.__start_index = self.__start_index + 1
+                index = index + 1
 
         return containers
 
@@ -355,7 +356,7 @@ class Host():
         self.create_vswitch()
 
     def start_nodes(self, cfg_list):
-        i = 0
+        i = self.__start_index
         for container in self.get_containers(cfg_list):
             container.start(i)
             container.connect_network()
