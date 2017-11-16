@@ -51,7 +51,7 @@ pkgversion=${pkgversion}-${distribution}-${os_dist_name}
 
 #[ -f Makefile ] && make distclean
 ../configure --prefix=/usr/local --target-list=${ARCH}-linux-user,${ARCH}-softmmu \
-    --disable-smartcard --disable-seccomp --disable-glusterfs --with-pkgversion="$pkgname ${distribution}-${os_dist_name} build-$buildnumber" --disable-tpm \
+    --disable-smartcard --disable-seccomp --disable-glusterfs --with-pkgversion="$pkgname ${distribution}-${os_dist_name} ${pkgrelease} build-$buildnumber" --disable-tpm \
     --disable-vhdx --disable-bluez --disable-gtk --disable-cocoa --disable-sdl --disable-xen \
     --without-system-pixman
 make -j${JOBS}
