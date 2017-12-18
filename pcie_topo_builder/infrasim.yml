@@ -1,0 +1,58 @@
+bmc:
+  interface: ens192
+bmc_connection_port: 9008
+compute:
+  cpu:
+    features: +vmx,+x2apic,+ss,+ds_cpl,+monitor,+ds
+    quantities: 2
+    type: host
+  extra_option: -D /tmp/qemu.log -trace events=/home/infrasim/trace_items
+  ipmi:
+    chardev:
+      backend: socket
+      host: 127.0.0.1
+      reconnect: 10
+    interface: bt
+  kvm_enabled: true
+  bios: /home/infrasim/sf/workspace/seabios/out/bios.bin
+  memory:
+    size: 8192
+  networks:
+  - device: vmxnet3
+    mac: 52:54:be:b9:77:de
+    network_mode: bridge
+    network_name: br0
+  numa_control: true
+  qemu_bin: /home/infrasim/sf/workspace/new/qemu/x86_64-softmmu/qemu-system-x86_64
+  storage_backend:
+  - drives:
+    - bootindex: 1
+      file: /home/infrasim/ubuntu16.04.qcow2
+      model: SATADOM
+      serial: 20160518AA851134100
+      version: S130710K
+    max_drive_per_controller: 6
+    type: ahci
+  - drives:
+    - aio: native
+      format: qcow2
+      preallocation: falloc
+      product: ST4000NM0005
+      serial: Z4C00D38
+      size: 2
+      vendor: SEAGATE
+      version: MS05
+      wwn: 5764824129059301745
+    - product: PX04SMB160
+      rotation: 1
+      serial: 26E0A024T2VD
+      size: 2
+      vendor: TOSHIBA
+      version: AM04
+      wwn: 5764611469514216386
+    max_drive_per_controller: 16
+    type: lsisas3008
+ipmi_console_port: 9007
+name: pci 
+sol_enable: false
+type: dell_r730xd
