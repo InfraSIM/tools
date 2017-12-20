@@ -47,8 +47,7 @@ def main():
     merge_element_list = args.merge_element
 
     if not insert_element_list:
-        print "Need elements!"
-        return
+        raise TypeError("Need elements!")
 
     # open source file
     with open(source_file, 'r') as f:

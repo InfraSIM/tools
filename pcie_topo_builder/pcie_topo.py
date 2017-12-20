@@ -26,6 +26,9 @@ def parse_args():
     help = "Network name."
     parser.add_argument('--network_name', type=str, help=help, default='br0')
 
+    help = "json file."
+    parser.add_argument('--file_path', type=str, help=help, default='./')
+
     args = parser.parse_args();
     return args
 
@@ -275,14 +278,15 @@ def main():
     nic_dict_add['device'] = args.nic_device
     nic_dict_add['network_mode'] = args.network_mode
     nic_dict_add['network_name'] = args.network_name
-
-    # generate id table
-    try:
-        with open('id_table.json') as f:
-            id_dict = json.loads(f.read())
-    except IOError as e:
-        print "Failed to open file: id_table.json"
+    file_path = args.file_path
+    if not os.path.exists(file_path):
+        print "Could not found json file"
         return
+
+    json_file_path = os.path.join(file_path, 'id_table.json')
+    # generate id table
+    with open(json_file_path) as f:
+        id_dict = json.loads(f.read())
 
     eth_id_list = id_dict['eth_id']
     nvme_id_list = id_dict['nvme_id']
@@ -336,7 +340,8 @@ def main():
     topo_dict['switch'] = switch_list
     network_dict['pcie_topology'] = topo_dict
 
-    with open('topology.yml', 'w') as f:
+    yaml_file_path = os.path.join(file_path, 'topology.yml')
+    with open(yaml_file_path, 'w') as f:
         yaml.dump(network_dict, f, default_flow_style=False)
 
     print "Done"
