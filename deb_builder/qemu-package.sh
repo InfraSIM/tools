@@ -53,7 +53,7 @@ pkgversion=${pkgversion}-${distribution}-${os_dist_name}
 ../configure --prefix=/usr/local --target-list=${ARCH}-linux-user,${ARCH}-softmmu \
     --disable-smartcard --disable-seccomp --disable-glusterfs --with-pkgversion="$pkgname ${distribution}-${os_dist_name} ${pkgrelease} build-$buildnumber" --disable-tpm \
     --disable-vhdx --disable-bluez --disable-gtk --disable-cocoa --disable-sdl --disable-xen \
-    --without-system-pixman
+    --without-system-pixman --enable-numa
 make -j${JOBS}
 
 #sudo apt-get build-dep libxen-dev
