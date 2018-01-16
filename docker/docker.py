@@ -126,8 +126,8 @@ class Container:
         self._ip = None
 
     def start(self, index):
-        ret = op.run("docker run -p {}:5901 --privileged -dit --name {} {}".
-                     format(5901+index, self._name, self._docker_image))
+        ret = op.run("docker run --cpuset-cpus {}-{} -p {}:5901 --privileged -dit --name {} {}".
+                     format(index*2, index*2+1, 5901+index, self._name, self._docker_image))
         if ret[0] != 0:
             raise Exception("Fail to start container {0}".format(self._name))
         op.run("docker exec {} sudo service ssh start".format(self._name))
