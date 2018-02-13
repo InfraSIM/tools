@@ -22,6 +22,14 @@ The output file is named infrasim-compute.box.
 
 The output file is named infrasim-compute.ova.
 
+## To build QEMU ubuntu image
+
+    git clone https://github.com/InfraSIM/tools.git
+    cd tools/packer
+    packer build infrasim-qemu.json
+
+The output file is named qemu-ubuntu16.04-image in folder packer/qemu-image.
+
 ## How to Deploy
 
 ### For vmware:
