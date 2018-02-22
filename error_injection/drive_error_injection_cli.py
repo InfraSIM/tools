@@ -212,7 +212,7 @@ class ErrorInjectCli(cmd.Cmd):
             if  error_map[parseargs.error].has_key('opcode'):
                 parseargs.opcode = error_map[parseargs.error]['opcode']
         elif parseargs.sc is None or parseargs.sct is None:
-            print "Error: please at least config (SC & SCT) or (ERROR)"
+            print "[Error]: please at least config (SC & SCT) or (ERROR)"
             print "eg: nvme -e internal-error"
             print line
             self.do_nvme("--help")
@@ -304,12 +304,30 @@ error_map = {
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-M", "--monitor", action="store", required=True,
-                             help="Server BMC IP address")
+    description = "Attention: '-N' or '-M' could not appear together!"
+    parser = argparse.ArgumentParser(description = description)
+    parser.add_argument("-N", "--nodename", action="store", required=False,
+                             help="node name")
+    parser.add_argument("-M", "--monitor", action="store", required=False,
+                             help="path of .monitor")
     args = parser.parse_args()
 
-    monitor = connect_monitor(args.monitor)
+    if not (not args.nodename) ^ (not args.monitor):
+        print "[ERROR] -N or -M need to be set, (can only choose one!)"
+        return
+
+    if args.nodename:
+        monitor_path = os.path.join(os.environ['HOME'],
+                                    ".infrasim", args.nodename,
+                                    '.monitor')
+    else:
+        monitor_path = args.monitor
+
+    if not os.path.exists(monitor_path):
+        print "Could not find monitor file {}".format(monitor_path)
+        return
+
+    monitor = connect_monitor(monitor_path)
     if not monitor:
         print "Could not connect to monitor!"
         return
