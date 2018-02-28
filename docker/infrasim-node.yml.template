@@ -1,0 +1,25 @@
+bmc:
+  interface: ens192
+compute:
+  kvm_enabled: true
+  boot:
+    splash: /usr/local/infrasim/data/boot_logo.jpg
+  cpu:
+    quantities: 2
+    type: Haswell
+  memory:
+    size: 4096
+  networks:
+  - device: e1000    
+    network_mode: bridge
+    network_name: ens192
+    mac: {{ mac_addr }}
+  storage_backend:
+  - drives:
+    - size: 8
+    max_drive_per_controller: 6
+    type: ahci
+name: dell-r730-1
+# serial_socket: /root/.infrasim/default/.serial
+sol_enable: true
+type: dell_r730

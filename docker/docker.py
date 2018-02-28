@@ -8,6 +8,8 @@ import time
 import re
 import yaml
 import argparse
+import jinja2
+
 
 global op
 
@@ -126,8 +128,8 @@ class Container:
         self._ip = None
 
     def start(self, index):
-        ret = op.run("docker run --cpuset-cpus {}-{} -p {}:5901 --privileged -dit --name {} {}".
-                     format(index*2, index*2+1, 5901+index, self._name, self._docker_image))
+        ret = op.run("docker run -v /mnt/sdb/{}:/mnt --cpuset-cpus {}-{} -m 8192m -p {}:5901 --privileged -dit --name {} {}".
+                     format(index, index*4, (index + 1) * 4 - 1, 5901+index, self._name, self._docker_image))
         if ret[0] != 0:
             raise Exception("Fail to start container {0}".format(self._name))
         op.run("docker exec {} sudo service ssh start".format(self._name))
@@ -170,9 +172,11 @@ class Container:
     def __change_cfg(self):
         # reset some fields (net_mac, name, serial_socket) to default.
         self._cfg["name"] = self._node_name
+        # if mac rendered from template, keep it, else, pop it
         for net in self._cfg["compute"]["networks"]:
             if "mac" in net:
-                net.pop("mac")
+                if "52:54:be:ce:6f:" not in net["mac"]:
+                    net.pop("mac")
         if "serial_socket" in self._cfg:
             self._cfg.pop("serial_socket")
 
@@ -338,10 +342,17 @@ class Host():
 
         index = self.__start_index
         image = "{0}:{1}".format(self.__docker_image, self.__docker_image_tag)
+	mac_prefix = "52:54:be:ce:6f:"
         for cfg in cfg_list:
-            with open(cfg["yml"]) as f:
-                cfg_map = yaml.safe_load(f)
             for i in range(0, cfg["number"]):
+                mac_addr="{0}{1:02d}".format(mac_prefix, i+1)
+                f_dir = os.path.dirname(os.path.abspath(cfg["yml"]))
+                j2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(f_dir),
+                                            trim_blocks=True)
+                f_name = os.path.basename(cfg["yml"])
+                yml_template = j2_env.get_template(f_name)
+                yml_str = yml_template.render(mac_addr=mac_addr)
+                cfg_map = yaml.load(yml_str)
                 containers.append(Container(index, image,
                                             self.__bridge, cfg_map))
                 index = index + 1
