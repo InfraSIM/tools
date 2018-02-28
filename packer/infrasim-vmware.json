@@ -6,7 +6,7 @@
         "gui_disable": "true",
         "memsize": "8192",
         "coresPerSocket": "1",
-        "numvcpus": "2",
+        "numvcpus": "4",
         "nic_name": "vmxnet3",
         "nic0_number": "160",
         "network0": "ADMIN",
