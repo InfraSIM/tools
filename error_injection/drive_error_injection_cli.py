@@ -21,6 +21,10 @@ Support commands:
     nvme          Inject error
     show          Show error status for all device
     nvmeclear     Clean error
+    scsi_logpage  Inject data to logpage
+    scsi_status   Inject scsi status error
+    scsiclear     Clear scsi error
+    history       Show qmp command history
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 """
 
@@ -30,6 +34,9 @@ usage: nvmeclear <id>
 clear nvme error on a device
 
 """
+
+history_command=[]
+
 
 def connect_monitor(monitor_file):
     if not os.path.exists(monitor_file):
@@ -97,62 +104,121 @@ class Monitor(object):
         self.s.shutdown(0)
 
 
+
+def list_argparse():
+    parser = argparse.ArgumentParser(prog="list",
+                                     usage="list all device id")
+    parser.add_argument("-u", "--update", action="store", required=False,
+                        help="update nvme device id")
+    return parser
+
+def nvmeclear_argparse():
+    parser = argparse.ArgumentParser(prog="nvmeclear")
+    parser.add_argument("-i", "--id", action="store", required=False,
+                        default=None, help="nvme device id")
+    return parser
+
+def scsiclear_argparse():
+    parser = argparse.ArgumentParser(prog="scsiclear")
+    parser.add_argument("-i", "--id", action="store", required=False,
+                        default=None, help="scsi device id")
+    return parser
+
+def nvme_argparse():
+    parser = argparse.ArgumentParser(prog="nvme")
+    parser.add_argument("-i", "--id", action="store", required=False,
+                        default=None, help="nvme device id")
+    parser.add_argument("-n", "--nsid", action="store", required=False,
+                        default=1, help="nvme namespace id")
+    parser.add_argument("-s", "--sc", action="store", required=False,
+                        default=None, help="status code")
+    parser.add_argument("-t", "--sct", action="store", required=False,
+                        default=None, help="status code type")
+    error_help = "Support nvme error type: {}".format(", ".join(error_map.keys()))
+    parser.add_argument("-e", "--error", action="store", required=False,
+                        default=None, help=error_help)
+    parser.add_argument("-m", "--more", action="store", required=False,
+                        default=True, help="more info in Error Information log")
+    parser.add_argument("-d", "--dnr", action="store", required=False,
+                        default=True, help="do not retry")
+    opcode_help = "support : flush, write, read, write_uncor, \
+                                compare, write_zeros, dsm, rw"
+    parser.add_argument("-o", "--opcode", action="store", required=False,
+                        default="rw", help=opcode_help)
+    parser.add_argument("-c", "--count", action="store", required=False,
+                        default=65536, help="error inject available times")
+    parser.add_argument("-l", "--lbas", action="store", required=False,
+                        help="logical block address")
+    return parser
+
+def scsi_logpage_argparse():
+    parser = argparse.ArgumentParser(prog="scsi_logpage")
+    parser.add_argument("-i", "--id", action="store", required=False,
+                        default=None, help="scsi device id")
+    error_help = "support page type: life_used, erase_count, temperature"
+    parser.add_argument("-t", "--type", action="store", required=True,
+                        default=None, help=error_help)
+    parser.add_argument("-a", "--action", action="store", required=True,
+                        default=None, help="support actions: add, remove, modify")
+    parser.add_argument("-p", "--parameter", action="store", required=False,
+                        default=None, help="parameter in logpage")
+    parser.add_argument("-pl", "--parameter_len", action="store", required=False,
+                        default=4, help="parameter length in byte")
+    parser.add_argument("-v", "--value", action="store", required=False,
+                        default=None, help="scsi device id")
+    return parser
+
+def scsi_status_argparse():
+    parser = argparse.ArgumentParser(prog="scsi_status")
+    parser.add_argument("-i", "--id", action="store", required=False,
+                        default=None, help="scsi device id")
+    error_help = "scsi status error type: busy,task-set-ful,task-aborted"
+    parser.add_argument("-t", "--type", action="store", required=False,
+                        default='busy', help="scsi status error type")
+    parser.add_argument("-c", "--count", action="store", required=False,
+                        default=65536, help="error inject available times")
+    parser.add_argument("-k", "--key", action="store", required=False,
+                        default=None, help="sense{key, asc, ascq}")
+    parser.add_argument("-a", "--asc", action="store", required=False,
+                        default=None, help="sense{key, asc, ascq}")
+    parser.add_argument("-aq", "--ascq", action="store", required=False,
+                        default=None, help="sense{key, asc, ascq}")
+    parser.add_argument("-l", "--lbas", action="store", required=False,
+                        default=None, help="lbas list")
+    error_help = "Support scsi error type: {}".format(", ".join(scsi_status_error_map.keys()))
+    parser.add_argument("-e", "--error", action="store", required=False,
+                        default=None, help=error_help)
+    return parser
+
+def history_record(command):
+    history_command.append(command)
+
+def show_record():
+    for cmd in history_command:
+        print cmd
+
 class ErrorInjectCli(cmd.Cmd):
     def __init__(self, monitor):
         cmd.Cmd.__init__(self)
         self._monitor = monitor
         self._list_args = None
         self._nvme_args = None
+        self._scsi_args = None
         self._nvmeclear_args = None
         self.prompt = "EI> "
         self._nvme_id_list_injected = {}
+        self._scsi_id_list_injected = {}
         self._nvme_id_list_all = []
 
     def init(self):
         self._nvme_id_list_all = get_device_list(self._monitor, "nvme")
-        self._list_args = self.list_argparse()
-        self._nvme_args = self.nvme_argparse()
-        self._nvmeclear_args = self.nvmeclear_argparse()
-
-    def list_argparse(self):
-        parser = argparse.ArgumentParser(prog="list",
-                                         usage="list all device id")
-        parser.add_argument("-u", "--update", action="store", required=False,
-                            help="update nvme device id")
-        return parser
-
-    def nvmeclear_argparse(self):
-        parser = argparse.ArgumentParser(prog="nvmeclear")
-        parser.add_argument("-i", "--id", action="store", required=False,
-                            default=None, help="nvme device id")
-        return parser
-
-    def nvme_argparse(self):
-        parser = argparse.ArgumentParser(prog="nvme")
-        parser.add_argument("-i", "--id", action="store", required=False,
-                            default=None, help="nvme device id")
-        parser.add_argument("-n", "--nsid", action="store", required=False,
-                            default=1, help="nvme namespace id")
-        parser.add_argument("-s", "--sc", action="store", required=False,
-                            default=None, help="status code")
-        parser.add_argument("-t", "--sct", action="store", required=False,
-                            default=None, help="status code type")
-        error_help = "Support nvme error type: {}".format(", ".join(error_map.keys()))
-        parser.add_argument("-e", "--error", action="store", required=False,
-                            default=None, help=error_help)
-        parser.add_argument("-m", "--more", action="store", required=False,
-                            default=True, help="more info in Error Information log")
-        parser.add_argument("-d", "--dnr", action="store", required=False,
-                            default=True, help="do not retry")
-        opcode_help = "support : flush, write, read, write_uncor, \
-                                    compare, write_zeros, dsm, rw"
-        parser.add_argument("-o", "--opcode", action="store", required=False,
-                            default="rw", help=opcode_help)
-        parser.add_argument("-c", "--count", action="store", required=False,
-                            default=65536, help="error inject available times")
-        parser.add_argument("-l", "--lbas", action="store", required=False,
-                            help="logical block address")
-        return parser
+        self._scsi_id_list_all = get_device_list(self._monitor, 'scsi')
+        self._list_args = list_argparse()
+        self._nvme_args = nvme_argparse()
+        self._scsi_logpage_args = scsi_logpage_argparse()
+        self._scsi_status_args = scsi_status_argparse()
+        self._nvmeclear_args = nvmeclear_argparse()
+        self._scsiclear_args = scsiclear_argparse()
 
     def do_show(self, args):
         for id in self._nvme_id_list_all:
@@ -162,11 +228,23 @@ class ErrorInjectCli(cmd.Cmd):
             else:
                 out_str = "{} NoError".format(id)
             print out_str
+        for id in self._scsi_id_list_all:
+            if self._scsi_id_list_injected.has_key(id):
+                error = self._scsi_id_list_injected[id]
+                out_str = "{} {}".format(id, error)
+            else:
+                out_str = "{} NoError".format(id)
+            print out_str
+
+    def do_history(self, args):
+        show_record()
 
     def do_help(self, args):
         if args:
             if args == "nvme":
                 self.do_nvme("--help")
+            if args == "scsi_logpage":
+                self.do_scsi_logpage("--help")
             elif args == "nvmeclear":
                 self.do_nvmeclear("--help")
             elif args == "list":
@@ -180,6 +258,10 @@ class ErrorInjectCli(cmd.Cmd):
             self.do_nvmeclear("--help")
             print line
             self.do_list("--help")
+            print line
+            self.do_scsi_logpage("--help")
+            print line
+            self.do_scsi_status('--help')
 
     def do_nvmeclear(self, args):
         args_list = args.split()
@@ -197,6 +279,24 @@ class ErrorInjectCli(cmd.Cmd):
             for key in nvme_dict.keys():
                 nvme_args = "-i {} -n 0 -s 0 -t 0 -c 0".format(key)
                 self.do_nvme(nvme_args)
+
+    def do_scsiclear(self, args):
+        args_list = args.split()
+        try:
+            parseargs = self._scsiclear_args.parse_args(args_list)
+        except SystemExit as e:
+            return
+
+        if parseargs.id:
+            scsi_args = "-i {} -c 0".format(parseargs.id)
+            self.do_scsi_status(scsi_args)
+        else:
+            # clear all device error
+            scsi_dict = self._scsi_id_list_injected
+            for key in scsi_dict.keys():
+                scsi_args = "-i {} -c 0".format(key)
+                self.do_scsi_status(scsi_args)
+
 
     def do_nvme(self, args):
         args_list = args.split()
@@ -258,8 +358,11 @@ class ErrorInjectCli(cmd.Cmd):
                 else:
                     print "Clean Done: {}".format(command["id"])
                     self._nvme_id_list_injected.pop(command['id'])
+                record = 'Inject Success: {}'.format(command)
             else:
                 print results
+                record = 'Inject Failed: {}'.format(command)
+            history_record(record)
 
     def do_list(self, args):
         args_list = args.split()
@@ -270,20 +373,143 @@ class ErrorInjectCli(cmd.Cmd):
         if parseargs.update:
             print '<<<<<<<<<<<<<< update device id >>>>>>>>>>>>>>>'
             self._nvme_id_list_all = get_device_list(self._monitor, 'nvme')
+            self._scsi_id_list_all = get_device_list(self._monitor, 'scsi')
 
         for id in self._nvme_id_list_all:
             print id
+        for id in self._scsi_id_list_all:
+            print id
 
-    def do_scsi(self, args):
-        pass
+    def do_scsi_logpage(self, args):
+        args_list = args.split()
+        try:
+            parseargs = self._scsi_logpage_args.parse_args(args_list)
+        except SystemExit as e:
+            return
+
+        monitor = self._monitor
+        if 'add' in parseargs.type and not parseargs.value:
+            print 'Error: add need a value'
+            return
+        # check sc and sct validition
+        cmd = {
+            "type": parseargs.type,
+            "action": parseargs.action,
+        }
+        if parseargs.parameter:
+            cmd['parameter'] = int(parseargs.parameter)
+
+        if parseargs.parameter_len:
+            cmd['parameter_length'] = int(parseargs.parameter_len)
+
+        if parseargs.value:
+            cmd['val'] = int(parseargs.value)
+
+        cmd_list = []
+        if not parseargs.id: # not set id, will inject to all drive
+            for id in self._scsi_id_list_all:
+                cmd_new = deepcopy(cmd)
+                cmd_new['id'] = id
+                cmd_list.append(cmd_new)
+        else:
+            cmd['id'] = parseargs.id
+            cmd_list.append(cmd) # only one cmd
+
+        for command in cmd_list:
+            payload = {
+                "execute": "scsi-drive-error-inject",
+                "arguments": command
+            }
+            monitor.send(payload)
+            results = monitor.recv()
+            if 'error' not in str(results):
+                record = 'Inject Success: {}'.format(command)
+            else:
+                print results
+                record = 'Inject Failed: {}'.format(command)
+            history_record(record)
+
+    def do_scsi_status(self, args):
+        args_list = args.split()
+        try:
+            parseargs = self._scsi_status_args.parse_args(args_list)
+        except SystemExit as e:
+            return
+
+        monitor = self._monitor
+        cmd = {}
+        if 'check-condition' in parseargs.type:
+            print parseargs.error
+            if parseargs.error and scsi_status_error_map.has_key(parseargs.error):
+                parseargs.key = scsi_status_error_map[parseargs.error]['key']
+                parseargs.asc = scsi_status_error_map[parseargs.error]['asc']
+                parseargs.ascq = scsi_status_error_map[parseargs.error]['ascq']
+            elif parseargs.key is None or parseargs.sct is None or parseargs.ascq is None:
+                print "[Error]: please at least config (key & asc & ascq) or (error)"
+                print "eg: scsi_status -t check-condition -e medium-error"
+                print line
+                self.do_scsi_status("--help")
+                return
+
+            # check sc and sct validition
+            sense_field = {
+                "key": int(parseargs.key),
+                "asc": int(parseargs.asc),
+                "ascq": int(parseargs.ascq)
+            }
+            cmd['sense'] = sense_field
+
+        cmd["count"] = int(parseargs.count)
+        cmd["error_type"] = parseargs.type
+        if parseargs.lbas:
+            cmd['lbas'] = [int(parseargs.lbas)]
+
+        cmd_list = []
+        if not parseargs.id: # not set id, will inject to all drive
+            for id in self._scsi_id_list_all:
+                cmd_new = deepcopy(cmd)
+                cmd_new['id'] = id
+                cmd_list.append(cmd_new)
+        else:
+            cmd['id'] = parseargs.id
+            cmd_list.append(cmd) # only one cmd
+
+        for command in cmd_list:
+            payload = {
+                "execute": "scsi-status-code-error-inject",
+                "arguments": command
+            }
+            monitor.send(payload)
+            results = monitor.recv()
+            if 'error' not in str(results):
+                record = 'Inject Success: {}'.format(command)
+                if command["count"]:
+                    print "Inject Done: {}".format(command['id'])
+                    self._scsi_id_list_injected[command['id']] = parseargs.type
+                else:
+                    print "Clean Done: {}".format(command["id"])
+                    if command['id'] in self._scsi_id_list_injected:
+                        self._scsi_id_list_injected.pop(command['id'])
+            else:
+                print results
+                record = 'Inject Failed: {}'.format(command)
+            history_record(record)
 
     def do_quit(self, args):
         self.do_nvmeclear("")
+        self.do_scsiclear("")
         return True
 
     def do_exit(self, args):
         self.do_nvmeclear("")
+        self.do_scsiclear("")
         sys.exit(0)
+
+
+scsi_status_error_map = {
+    # add more error type here if needed
+    'medium-error': {'key':3, 'asc':17, 'ascq':0}
+}
 
 
 error_map = {
