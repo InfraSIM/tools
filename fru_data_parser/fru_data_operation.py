@@ -107,12 +107,12 @@ if __name__ == "__main__":
     cmd = get_fru_data_cmd(file_path, fru_id=0)
     print "cmd:", cmd[2]
     p = Fru_Data_Cmd(cmd[2])
-
-    print "-" * 40
-    print "2. Get chassis info"
-    print "Chassis part number:", p.get_chassis_part_number()
-    print "Chassis serial number:", p.get_chassis_serial_number()
-    print "Chassis extra:", p.get_chassis_extra()
+    if p.obj_chassis_info_area:
+        print "-" * 40
+        print "2. Get chassis info"
+        print "Chassis part number:", p.get_chassis_part_number()
+        print "Chassis serial number:", p.get_chassis_serial_number()
+        print "Chassis extra:", p.get_chassis_extra()
 
     print "-" * 40
     print "3. Get board info"
@@ -132,29 +132,29 @@ if __name__ == "__main__":
     print "Product serial number:", p.get_product_serial_number()
     print "Asset tag:", p.get_product_asset_tag()
     print "FRU file id:", p.get_product_fru_file_id()
+    if p.obj_chassis_info_area:
+        print "-" * 40
+        print "5. Get product info"
+        print "data:", p.obj_chassis_info_area.data
+        p.add_chassis_custom_field("EMCV001")
+        print "data:", p.obj_chassis_info_area.data
+        p.remove_chassis_custom_field(0)
+        print "data:", p.obj_chassis_info_area.data
+        p.add_chassis_custom_field("EMCV002")
+        print "data:", p.obj_chassis_info_area.data
+        p.obj_chassis_info_area.set_field(2, "EMCV003")
+        print "data:", p.obj_chassis_info_area.data
 
-    print "-" * 40
-    print "5. Get product info"
-    print "data:", p.obj_chassis_info_area.data
-    p.add_chassis_custom_field("EMCV001")
-    print "data:", p.obj_chassis_info_area.data
-    p.remove_chassis_custom_field(0)
-    print "data:", p.obj_chassis_info_area.data
-    p.add_chassis_custom_field("EMCV002")
-    print "data:", p.obj_chassis_info_area.data
-    p.obj_chassis_info_area.set_field(2, "EMCV003")
-    print "data:", p.obj_chassis_info_area.data
+        print "-" * 40
+        print "6. Change chassis serial number and validate"
+        p.set_chassis_serial_number("ZMOD29302843DAB")
+        print "Chassis serial number:", p.get_chassis_serial_number()
 
-    print "-" * 40
-    print "6. Change chassis serial number and validate"
-    p.set_chassis_serial_number("ZMOD29302843DAB")
-    print "Chassis serial number:", p.get_chassis_serial_number()
-
-    print "-" * 40
-    print "7. Change board serial number and validate"
-    print "Board serial number:", p.get_board_serial_number()
-    p.obj_board_info_area.set_board_serial_number("ZTF3J052600357")
-    print "Board serial number:", p.get_board_serial_number()
+        print "-" * 40
+        print "7. Change board serial number and validate"
+        print "Board serial number:", p.get_board_serial_number()
+        p.obj_board_info_area.set_board_serial_number("ZTF3J052600357")
+        print "Board serial number:", p.get_board_serial_number()
 
     update_file(file_path, "updated.emu", cmd[0], cmd[1], p.format_cmd())
 
