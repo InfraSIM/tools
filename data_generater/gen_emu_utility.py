@@ -57,6 +57,7 @@ class Base(object):
         self._password = None
         self._intf = None
         self._ipmitool = None
+        self._ipmitool_header = None
 
     def __call__(self):
         return self._string()
@@ -255,23 +256,16 @@ class FRU(Base):
     def __get_fru_ids(self):
         if self._host is None or self._user is None or self._password is None:
             raise ValueError("Missing host info.")
-
-        ipmitool_fru_command = "{ipmitool} -I {intf} -U {user} -P {password} -H {host} fru".\
-            format(ipmitool=self._ipmitool, intf=self._intf, user=self._user,
-                   password=self._password, host=self._host)
-        command_exit_status, command_output = self.run_command(ipmitool_fru_command,
-                                                               stdout=subprocess.PIPE,
-                                                               stderr=subprocess.PIPE)
-
-        if command_exit_status != 0:
-            raise ValueError("Command {} failed [exit code: {}].".format(
-                ipmitool_fru_command, command_exit_status))
-
         id_list = []
-        for line in command_output.split(os.linesep):
-            re_obj = re.search("^FRU Device Description : .* \(ID (\d+)\)", line)
-            if re_obj:
-                id_list.append(int(re_obj.group(1)))
+        for fru_id in range(0, 0xff):
+            ipmitool_get_fru_inventory_command = "{ipmitool} -I {intf} -U {user} -P {password} -H {host} raw 0xa 0x10 {fru_id}".\
+                format(ipmitool=self._ipmitool, intf=self._intf, user=self._user,
+                       password=self._password, host=self._host, fru_id=fru_id)
+            command_exit_status, command_output = self.run_command(ipmitool_get_fru_inventory_command,
+                                                                               stdout=subprocess.PIPE,
+                                                                               stderr=subprocess.PIPE)
+            if command_exit_status == 0:
+                id_list.append(fru_id)
 
         return id_list
 
