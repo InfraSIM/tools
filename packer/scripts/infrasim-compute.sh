@@ -6,7 +6,6 @@ export LC_ALL=C
 apt-get install -y python-pip libssl-dev libpython-dev git bridge-utils libaio-dev
 
 pip install setuptools
-pip install --upgrade pip
 sleep 1
 
 # install infrasim-compute
