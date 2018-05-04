@@ -42,9 +42,11 @@ done
 
 pushd $src
 
-[ -f Makefile ] && make distclean
+[ -d build ] && rm -rf build
+mkdir -p build
 autoreconf -i
-./configure CFLAGS="-lrt -lpthread" --prefix=/usr/local --with-tcl=no
+pushd build
+../configure CFLAGS="-lrt -lpthread" --prefix=/usr/local --with-tcl=no
 make -j${JOBS}
 
 $CHECKINSTALL -D -y \
@@ -58,4 +60,5 @@ $CHECKINSTALL -D -y \
     --maintainer="InfraSIM Team <infrasim@googlegroups.com>" \
     make install
 
+popd
 popd
