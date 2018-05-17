@@ -3,6 +3,7 @@
 export LC_ALL=C
 
 # install dependency for infrasim-compute
+rm /var/lib/dpkg/lock
 apt-get install -y python-pip libssl-dev libpython-dev git bridge-utils libaio-dev
 
 pip install setuptools
