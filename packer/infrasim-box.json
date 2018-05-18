@@ -5,10 +5,26 @@
         "gui_disable": "true",
         "memsize": "5120",
         "cpus": "2",
-        "output": "infrasim-compute.box"
+        "output": "infrasim-compute.box",
+        "crt_file_path": "../../EMCCA.crt"
     },
     "provisioners": [
         {
+             "type": "file",
+             "source": "{{ user `crt_file_path` }}",
+             "destination": "/tmp/EMCCA.crt"
+         },
+         {
+             "type": "shell",
+             "inline": [
+                 "cp /tmp/EMCCA.crt /usr/share/ca-certificates/",
+                 "bash -c 'echo EMCCA.crt >> /etc/ca-certificates.conf'",
+                 "update-ca-certificates"
+             ],
+             "execute_command": "echo 'vagrant' |sudo -S bash '{{.Path}}'"
+         },
+
+         {
             "type": "shell",
             "scripts": [
                 "scripts/base.sh",
