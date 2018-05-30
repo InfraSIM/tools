@@ -1,5 +1,6 @@
 # Use an official Python runtime as a base image
 FROM ubuntu:16.04
+ENV DEBIAN_FRONTEND noninteractive
 
 # Set the working directory to /app
 WORKDIR /infrasim-compute
@@ -7,17 +8,20 @@ WORKDIR /infrasim-compute
 # Copy the current directory contents into the container at /app
 ADD . /infrasim-compute
 
-
 # Install dependency
 RUN apt-get update
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential libssl-dev libffi-dev python-dev libaio-dev bridge-utils git apt-utils
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y net-tools libnuma-dev libglib2.0-dev libapt-pkg5.0 iputils-ping isc-dhcp-client
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-server
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y vim curl sudo
+RUN apt-get install -y socat build-essential libssl-dev libffi-dev python-dev libaio-dev bridge-utils git apt-utils python-pip
+RUN apt-get install -y net-tools libnuma-dev libglib2.0-dev libapt-pkg5.0 iputils-ping isc-dhcp-client
+RUN apt-get install -y openssh-server
+RUN apt-get install -y vim curl sudo
+RUN apt-get install -y --no-install-recommends python-apt
+RUN apt-get install -y ca-certificates
+RUN apt-get install -y apt-transport-https wget
 
-# Upgrade pip and install setuptools
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y python-pip
-RUN pip install --upgrade pip
+# Add public bintray to sources.list
+RUN echo "deb https://dl.bintray.com/infrasim/deb xenial main" >> /etc/apt/sources.list
+
+# install setuptools
 RUN pip install setuptools
 
 # Install any needed packages specified in requirements.txt
@@ -39,15 +43,11 @@ RUN chown infrasim /home/infrasim
 EXPOSE 80
 EXPOSE 22
 
-# Define environment variable
-ENV DEBIAN_FRONTEND noninteractive
-
 # Run app.py when the container launches
 RUN ["sudo", "python", "setup.py", "install"]
 
 # RUN which infrasim
 USER infrasim
-RUN ["sudo", "infrasim", "init"]
+RUN ["sudo", "infrasim", "init", "-f"]
 
 ENTRYPOINT service ssh restart && bash
-
