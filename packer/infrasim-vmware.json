@@ -16,7 +16,8 @@
         "network2": "CONTROL",
         "nic3_number": "256",
         "network3": "DATA",
-        "crt_file_path": "../../EMCCA.crt"
+        "crt_file_path": "../../EMCCA.crt",
+        "dns_file_path": "/etc/resolv.conf"
     },
     "provisioners": [
         {
@@ -25,8 +26,14 @@
             "destination": "/tmp/EMCCA.crt"
         },
         {
+            "type": "file",
+            "source": "{{ user `dns_file_path` }}",
+            "destination": "/tmp/resolv.conf"
+        },
+        {
             "type": "shell",
             "inline": [
+                "cp /tmp/resolv.conf /etc/resolv.conf",
                 "cp /tmp/EMCCA.crt /usr/share/ca-certificates/",
                 "bash -c 'echo EMCCA.crt >> /etc/ca-certificates.conf'",
                 "update-ca-certificates"
