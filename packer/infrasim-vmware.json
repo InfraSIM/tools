@@ -17,7 +17,7 @@
         "nic3_number": "256",
         "network3": "DATA",
         "crt_file_path": "../../EMCCA.crt",
-        "dns_file_path": "/etc/resolv.conf"
+        "dns_file_path": "../../resolv.conf"
     },
     "provisioners": [
         {
@@ -107,6 +107,7 @@
             "ssh_port": 22,
 	        "headless": "{{ user `gui_disable` }}",
             "ssh_wait_timeout": "10000s",
+            "vnc_bind_address": "0.0.0.0",
             "shutdown_command": "echo 'infrasim' | sudo -S shutdown -P now",
             "vmx_data": {
                 "memsize": "{{ user `memsize` }}",
