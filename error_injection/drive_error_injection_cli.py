@@ -64,6 +64,23 @@ def get_device_list(monitor, device_type):
     else:
         return None
 
+def get_device_list_info(monitor, device_list):
+    payload = {
+            "execute": "human-monitor-command",
+            "arguments": {
+                "command-line": "info qtree"
+                }
+            }
+    monitor.send(payload)
+    results = monitor.recv()
+    dev_list_info = {}
+    returns = str(results.get('return')).split("dev:")[1:]
+    for device_id in device_list:
+        for dev in returns:
+            if device_id in dev:
+                dev_list_info[device_id] = re.findall(r'serial = "(\S+)"', dev)[0]
+                break
+    return dev_list_info
 
 class Monitor(object):
 
@@ -375,10 +392,13 @@ class ErrorInjectCli(cmd.Cmd):
             self._nvme_id_list_all = get_device_list(self._monitor, 'nvme')
             self._scsi_id_list_all = get_device_list(self._monitor, 'scsi')
 
+        nvme_device_info = get_device_list_info(self._monitor, self._nvme_id_list_all)
+        scsi_device_info = get_device_list_info(self._monitor, self._scsi_id_list_all)
+
         for id in self._nvme_id_list_all:
-            print id
+            print id, "({})".format(nvme_device_info.get(id, None))
         for id in self._scsi_id_list_all:
-            print id
+            print id, "({})".format(scsi_device_info.get(id, None))
 
     def do_scsi_logpage(self, args):
         args_list = args.split()
@@ -444,7 +464,7 @@ class ErrorInjectCli(cmd.Cmd):
                 parseargs.key = scsi_status_error_map[parseargs.error]['key']
                 parseargs.asc = scsi_status_error_map[parseargs.error]['asc']
                 parseargs.ascq = scsi_status_error_map[parseargs.error]['ascq']
-            elif parseargs.key is None or parseargs.sct is None or parseargs.ascq is None:
+            elif parseargs.key is None or parseargs.asc is None or parseargs.ascq is None:
                 print "[Error]: please at least config (key & asc & ascq) or (error)"
                 print "eg: scsi_status -t check-condition -e medium-error"
                 print line
