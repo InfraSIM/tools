@@ -6,6 +6,7 @@ export LC_ALL=C
 rm /var/lib/dpkg/lock
 apt-get install -y python-pip libssl-dev libpython-dev git bridge-utils libaio-dev
 
+pip install requests==2.15.1
 pip install setuptools
 sleep 1
 
