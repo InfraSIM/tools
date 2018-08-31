@@ -17,6 +17,7 @@
         "nic3_number": "256",
         "network3": "DATA",
         "crt_file_path": "../../EMCCA.crt",
+        "test_crt_file_path": "../../emcroot_test.crt",
         "dns_file_path": "../../resolv.conf"
     },
     "provisioners": [
@@ -24,6 +25,11 @@
             "type": "file",
             "source": "{{ user `crt_file_path` }}",
             "destination": "/tmp/EMCCA.crt"
+        },
+        {
+            "type": "file",
+            "source": "{{ user `test_crt_file_path` }}",
+            "destination": "/tmp/emcroot_test.crt"
         },
         {
             "type": "file",
@@ -35,7 +41,9 @@
             "inline": [
                 "cp /tmp/resolv.conf /etc/resolv.conf",
                 "cp /tmp/EMCCA.crt /usr/share/ca-certificates/",
+                "cp /tmp/emcroot_test.crt /usr/share/ca-certificates/",
                 "bash -c 'echo EMCCA.crt >> /etc/ca-certificates.conf'",
+                "bash -c 'echo emcroot_test.crt >> /etc/ca-certificates.conf'",
                 "update-ca-certificates"
             ],
             "execute_command": "echo 'infrasim' |sudo -S bash '{{.Path}}'"
