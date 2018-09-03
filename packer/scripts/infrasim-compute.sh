@@ -6,7 +6,8 @@ export LC_ALL=C
 rm /var/lib/dpkg/lock
 apt-get install -y python-pip libssl-dev libpython-dev git bridge-utils libaio-dev
 
-pip install setuptools
+# install setuptools and netifaces to setup infrasim-compute
+pip install setuptools netifaces
 sleep 1
 
 # install infrasim-compute
