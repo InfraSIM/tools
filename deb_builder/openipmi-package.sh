@@ -46,7 +46,7 @@ pushd $src
 mkdir -p build
 autoreconf -i
 pushd build
-../configure CFLAGS="-lrt -lpthread" --prefix=/usr/local --with-tcl=no
+../configure CFLAGS="-lrt -lpthread -lm" --prefix=/usr/local --with-tcl=no
 make -j${JOBS}
 
 $CHECKINSTALL -D -y \
