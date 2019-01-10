@@ -186,12 +186,12 @@ def scsi_logpage_argparse():
     return parser
 
 def scsi_status_argparse():
-    parser = argparse.ArgumentParser(prog="scsi_status")
+    parser = argparse.ArgumentParser(prog="scsi_status", formatter_class=argparse.RawTextHelpFormatter, description='Inject status error to drive. Injected error will cleaned automatically after cli exit.')
     parser.add_argument("-i", "--id", action="store", required=False,
                         default=None, help="scsi device id")
     error_help = "scsi status error type: busy,task-set-ful,task-aborted"
     parser.add_argument("-t", "--type", action="store", required=False,
-                        default='busy', help="scsi status error type")
+                        default='busy', help="scsi status error type. Available types are,\n check-condition\n condition-met\n busy (default)\n reservation-conflict\n task-set-full\n aca-active\n task-aborted")
     parser.add_argument("-c", "--count", action="store", required=False,
                         default=65536, help="error inject available times")
     parser.add_argument("-k", "--key", action="store", required=False,
@@ -202,7 +202,7 @@ def scsi_status_argparse():
                         default=None, help="sense{key, asc, ascq}")
     parser.add_argument("-l", "--lbas", action="store", required=False,
                         default=None, help="lbas list")
-    error_help = "Support scsi error type: {}".format(", ".join(scsi_status_error_map.keys()))
+    error_help = "Support scsi sense key error within CHECK_CONDITION: {}".format(", ".join(scsi_status_error_map.keys()))
     parser.add_argument("-e", "--error", action="store", required=False,
                         default=None, help=error_help)
     return parser
@@ -458,6 +458,9 @@ class ErrorInjectCli(cmd.Cmd):
 
         monitor = self._monitor
         cmd = {}
+        if parseargs.error is not None and parseargs.type != 'check-condition':
+            print "[Error]: type must be 'check-condition' when error is specified."
+            return
         if 'check-condition' in parseargs.type:
             print parseargs.error
             if parseargs.error and scsi_status_error_map.has_key(parseargs.error):
