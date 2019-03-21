@@ -186,25 +186,29 @@ def scsi_logpage_argparse():
     return parser
 
 def scsi_status_argparse():
-    parser = argparse.ArgumentParser(prog="scsi_status", formatter_class=argparse.RawTextHelpFormatter, description='Inject status error to drive. Injected error will cleaned automatically after cli exit.')
+    parser = argparse.ArgumentParser(prog="scsi_status", formatter_class=argparse.RawTextHelpFormatter,
+                                     description='Inject status error to drive. Injected error will cleaned automatically after cli exit.')
     parser.add_argument("-i", "--id", action="store", required=False,
                         default=None, help="scsi device id")
-    error_help = "scsi status error type: busy,task-set-ful,task-aborted"
-    parser.add_argument("-t", "--type", action="store", required=False,
-                        default='busy', help="scsi status error type. Available types are,\n check-condition\n condition-met\n busy (default)\n reservation-conflict\n task-set-full\n aca-active\n task-aborted")
+    error_types = ["check-condition", "condition-met", "busy", "reservation-conflict",
+                   "task-set-full", "aca-active", "task-aborted"]
     parser.add_argument("-c", "--count", action="store", required=False,
                         default=65536, help="error inject available times")
-    parser.add_argument("-k", "--key", action="store", required=False,
-                        default=None, help="sense{key, asc, ascq}")
-    parser.add_argument("-a", "--asc", action="store", required=False,
-                        default=None, help="sense{key, asc, ascq}")
-    parser.add_argument("-aq", "--ascq", action="store", required=False,
-                        default=None, help="sense{key, asc, ascq}")
+    parser.add_argument("-t", dest="type", action="store", required=False,
+                        choices=error_types,
+                        default="busy",
+                        metavar='TYPE',
+                        help="scsi status error type:\n" + "\n".join(error_types))
+
     parser.add_argument("-l", "--lbas", action="store", required=False,
-                        default=None, help="lbas list")
-    error_help = "Support scsi sense key error within CHECK_CONDITION: {}".format(", ".join(scsi_status_error_map.keys()))
-    parser.add_argument("-e", "--error", action="store", required=False,
-                        default=None, help=error_help)
+                        default=0, help="lbas list")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-s", "--sense", action="store", required=False, metavar='N',
+                        default=None, type=lambda x: int(x, 0), nargs=3, help="sense_code [key asc ascq].\nRefer to https://en.wikipedia.org/wiki/Key_Code_Qualifier")
+    error_keys = scsi_status_error_map.keys()
+    error_help = "Supported scsi sense code string:\n{}".format("\n".join(error_keys))
+    group.add_argument("-e", "--error", action="store", required=False, metavar='ERROR',
+                       choices=error_keys, default=None, help=error_help)
     return parser
 
 def history_record(command):
@@ -255,7 +259,8 @@ class ErrorInjectCli(cmd.Cmd):
 
     def do_history(self, args):
         show_record()
-
+    def emptyline(self):
+        return ""
     def do_help(self, args):
         if args:
             if args == "nvme":
@@ -458,27 +463,23 @@ class ErrorInjectCli(cmd.Cmd):
 
         monitor = self._monitor
         cmd = {}
-        if parseargs.error is not None and parseargs.type != 'check-condition':
-            print "[Error]: type must be 'check-condition' when error is specified."
-            return
-        if 'check-condition' in parseargs.type:
-            print parseargs.error
-            if parseargs.error and scsi_status_error_map.has_key(parseargs.error):
-                parseargs.key = scsi_status_error_map[parseargs.error]['key']
-                parseargs.asc = scsi_status_error_map[parseargs.error]['asc']
-                parseargs.ascq = scsi_status_error_map[parseargs.error]['ascq']
-            elif parseargs.key is None or parseargs.asc is None or parseargs.ascq is None:
-                print "[Error]: please at least config (key & asc & ascq) or (error)"
-                print "eg: scsi_status -t check-condition -e medium-error"
-                print line
-                self.do_scsi_status("--help")
-                return
+        if parseargs.error or parseargs.sense:
+            print "[Warning]: type is set to 'check-condition' when error or sense is specified."
+            parseargs.type = "check-condition"
+            if parseargs.error:
+                sense_key = scsi_status_error_map[parseargs.error]['key']
+                sense_asc = scsi_status_error_map[parseargs.error]['asc']
+                sense_ascq = scsi_status_error_map[parseargs.error]['ascq']
+            if parseargs.sense:
+                sense_key = parseargs.sense[0]
+                sense_asc = parseargs.sense[1]
+                sense_ascq = parseargs.sense[2]
 
             # check sc and sct validition
             sense_field = {
-                "key": int(parseargs.key),
-                "asc": int(parseargs.asc),
-                "ascq": int(parseargs.ascq)
+                "key": sense_key,
+                "asc": sense_asc,
+                "ascq": sense_ascq,
             }
             cmd['sense'] = sense_field
 
@@ -496,6 +497,8 @@ class ErrorInjectCli(cmd.Cmd):
         else:
             cmd['id'] = parseargs.id
             cmd_list.append(cmd) # only one cmd
+        for cmd in cmd_list:
+            print(cmd)
 
         for command in cmd_list:
             payload = {
